@@ -53,5 +53,3 @@ private fun findMinimumNumberOfCubes(cubeString: String): Triple<Int, Int, Int> 
     }
     return Triple(red, green, blue)
 }
-
-data class Game(val id: Int, val maxRed: Int, val maxGreen: Int, val maxBlue: Int)
