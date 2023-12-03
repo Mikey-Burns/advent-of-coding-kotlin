@@ -1,10 +1,14 @@
 fun main() {
     fun part1(input: List<String>): Int {
-        return input.sumOf { validGameValue(it) }
+        return input.map(::stringToGame)
+            .filter(Game::isValid)
+            .sumOf(Game::id)
     }
 
     fun part2(input: List<String>): Int {
-        return input.sumOf { powerOfGame(it) }
+        return input.map(::stringToGame)
+            .map(Game::maxCubesUsed)
+            .sumOf { it.red * it.green * it.blue }
     }
 
     // test if implementation meets criteria from the description, like:
@@ -18,38 +22,35 @@ fun main() {
     part2(input).println()
 }
 
-fun validGameValue(input: String): Int {
+fun stringToGame(input: String): Game {
     val idSplit = input.split(":")
-    val id = idSplit[0].split(" ")[1]
-    val (red, green, blue) = findMinimumNumberOfCubes(idSplit[1])
-    return if (red <= 12 && green <= 13 && blue <= 14) id.toInt() else 0
+    val id = idSplit[0].split(" ")[1].toInt()
+    val rounds = idSplit[1].split(";")
+        .map { round -> round.replace(",", "")}
+        .map { round ->
+            val roundSplit = round.split(" ")
+            listOf("red", "green", "blue")
+                .map { color ->
+                    val index = roundSplit.indexOf(color)
+                    if (index != -1) roundSplit[index - 1].toInt() else 0
+                }
+                .let { Round(it[0], it[1], it[2]) }
+        }
+    return Game(id, rounds)
 }
 
-fun powerOfGame(input: String): Int {
-    val idSplit = input.split(":")
-    val (red, green, blue) = findMinimumNumberOfCubes(idSplit[1])
-    return red * green * blue
+data class Game(val id: Int, val rounds: List<Round>) {
+
+    fun isValid(): Boolean = rounds.all(Round::isValid)
+
+    fun maxCubesUsed(): Round = rounds.reduce { r1, r2 -> Round(
+        maxOf(r1.red, r2.red),
+        maxOf(r1.green, r2.green),
+        maxOf(r1.blue, r2.blue)
+    )}
 }
 
-private fun findMinimumNumberOfCubes(cubeString: String): Triple<Int, Int, Int> {
-    val splitContainingRounds = cubeString.split(";")
-    val red = splitContainingRounds.maxOf { round ->
-        val splitContainingColors = round.replace(",", "").split(" ")
-        val redIndex = splitContainingColors.indexOf("red")
-        val red = if (redIndex != -1) splitContainingColors[redIndex - 1].toInt() else 0
-        red
-    }
-    val green = splitContainingRounds.maxOf { round ->
-        val splitContainingColors = round.replace(",", "").split(" ")
-        val greenIndex = splitContainingColors.indexOf("green")
-        val green = if (greenIndex != -1) splitContainingColors[greenIndex - 1].toInt() else 0
-        green
-    }
-    val blue = splitContainingRounds.maxOf { round ->
-        val splitContainingColors = round.replace(",", "").split(" ")
-        val blueIndex = splitContainingColors.indexOf("blue")
-        val blue = if (blueIndex != -1) splitContainingColors[blueIndex - 1].toInt() else 0
-        blue
-    }
-    return Triple(red, green, blue)
+data class Round(val red: Int, val green: Int, val blue: Int) {
+
+    fun isValid(): Boolean = red <= 12 && green <= 13 && blue <= 14
 }
