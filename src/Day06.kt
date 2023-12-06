@@ -1,13 +1,13 @@
 fun main() {
     fun part1(input: List<String>): Int {
         return parseRaces(input)
-            .map { race -> race.numberOfWinners() }
+            .map(Race::fastNumberOfWinners)
             .reduce { acc, winners -> acc * winners }
     }
 
     fun part2(input: List<String>): Int {
         return parseRace(input)
-            .numberOfWinners()
+            .fastNumberOfWinners()
     }
 
     // test if implementation meets criteria from the description, like:
@@ -23,11 +23,15 @@ fun main() {
 
 data class Race(val time: Long, val distance: Long) {
 
-    fun calculateDistance(holdTime: Long): Long = holdTime * (time - holdTime)
+    private fun calculateDistance(holdTime: Long): Long = holdTime * (time - holdTime)
 
-    fun calculateAllTimes(): List<Long> = (1..<time).map(::calculateDistance)
+    private fun findFirstWinner(): Long = (1..time)
+        .first { calculateDistance(it) > distance }
 
-    fun numberOfWinners(): Int = calculateAllTimes().count { it > distance }
+    private fun findLastWinner(): Long = (time downTo 1)
+        .first { calculateDistance(it) > distance }
+
+    fun fastNumberOfWinners(): Int = (findLastWinner() - findFirstWinner() + 1).toInt()
 }
 
 fun parseRaces(input: List<String>): List<Race> {
