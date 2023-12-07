@@ -96,7 +96,7 @@ fun Hand(line: String, useJokers: Boolean = false): Hand {
     return Hand(cards.map { fromSymbol(it, useJokers) }, bid.toInt())
 }
 
-fun handTypeComparator(): Comparator<Hand> = Comparator { h1, h2 -> h1.handType.ordinal - h2.handType.ordinal }
+fun handTypeComparator(): Comparator<Hand> = compareBy { it.handType.ordinal }
 
 fun cardsComparator(): Comparator<Hand> = Comparator { h1, h2 ->
     h1.cards.zip(h2.cards)
