@@ -76,16 +76,3 @@ fun Maze(input: List<String>): Maze {
         .map { (start, left, right) -> Direction(start, left, right) }
     return Maze(pattern, directions)
 }
-
-fun Long.lcm(other: Long): Long {
-    val larger = maxOf(this, other)
-    val maxLcm = this * other
-    var candidate = larger
-    while (candidate <= maxLcm) {
-        if (candidate % this == 0L && candidate % other == 0L) return candidate
-        candidate += larger
-    }
-    return maxLcm
-}
-
-fun List<Long>.lcm(): Long = this.fold(1, Long::lcm)
