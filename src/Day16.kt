@@ -2,18 +2,37 @@ import java.util.*
 
 fun main() {
     fun part1(input: List<String>): Int {
-        return LavaMap(input).energize()
+        return LavaMap(input)
+            .energize(LavaMap.PointWithDirection(0, 0, LavaMap.Direction.RIGHT))
     }
 
     fun part2(input: List<String>): Int {
-        return 0
+        return LavaMap(input)
+            .let { lavaMap ->
+                val bottomIndex = input.lastIndex
+                val rightIndex = input.first().lastIndex
+                val startingPoints = input.indices.flatMap { row ->
+                    // Left and Right
+                    listOf(
+                        LavaMap.PointWithDirection(row, 0, LavaMap.Direction.RIGHT),
+                        LavaMap.PointWithDirection(row, rightIndex, LavaMap.Direction.LEFT)
+                    )
+                } + (0..rightIndex).flatMap {column ->
+                    // Top and Bottom
+                    listOf(
+                        LavaMap.PointWithDirection(0, column, LavaMap.Direction.DOWN),
+                        LavaMap.PointWithDirection(bottomIndex, column, LavaMap.Direction.UP)
+                    )
+                }
+                startingPoints.maxOf(lavaMap::energize)
+            }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day16_test")
     check(part1(testInput).also(::println) == 46)
     val testInput2 = readInput("Day16_test")
-    check(part2(testInput2).also(::println) == 0)
+    check(part2(testInput2).also(::println) == 51)
 
     val input = readInput("Day16")
     part1(input).println()
@@ -23,10 +42,10 @@ fun main() {
 data class LavaMap(val rows: List<String>) {
     private val lastIndex = rows.first().lastIndex
 
-    fun energize(): Int {
+    fun energize(startingPoint: PointWithDirection): Int {
         val energized: MutableSet<PointWithDirection> = mutableSetOf()
         val toEnergize: Stack<PointWithDirection> = Stack<PointWithDirection>()
-            .apply { add(PointWithDirection(0, 0, Direction.RIGHT)) }
+            .apply { add(startingPoint) }
         while (toEnergize.isNotEmpty()) {
             val point = toEnergize.pop()
             if (isPointValid(point) && !energized.contains(point)) {
