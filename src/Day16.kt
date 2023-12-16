@@ -7,25 +7,23 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return LavaMap(input)
-            .let { lavaMap ->
-                val bottomIndex = input.lastIndex
-                val rightIndex = input.first().lastIndex
-                val startingPoints = input.indices.flatMap { row ->
-                    // Left and Right
-                    listOf(
-                        LavaMap.PointWithDirection(row, 0, LavaMap.Direction.RIGHT),
-                        LavaMap.PointWithDirection(row, rightIndex, LavaMap.Direction.LEFT)
-                    )
-                } + (0..rightIndex).flatMap {column ->
-                    // Top and Bottom
-                    listOf(
-                        LavaMap.PointWithDirection(0, column, LavaMap.Direction.DOWN),
-                        LavaMap.PointWithDirection(bottomIndex, column, LavaMap.Direction.UP)
-                    )
-                }
-                startingPoints.maxOf(lavaMap::energize)
-            }
+        val bottomIndex = input.lastIndex
+        val rightIndex = input.first().lastIndex
+        val startingPoints = input.indices.flatMap { row ->
+            // Left and Right
+            listOf(
+                LavaMap.PointWithDirection(row, 0, LavaMap.Direction.RIGHT),
+                LavaMap.PointWithDirection(row, rightIndex, LavaMap.Direction.LEFT)
+            )
+        } + (input.first().indices).flatMap { column ->
+            // Top and Bottom
+            listOf(
+                LavaMap.PointWithDirection(0, column, LavaMap.Direction.DOWN),
+                LavaMap.PointWithDirection(bottomIndex, column, LavaMap.Direction.UP)
+            )
+        }
+        val lavaMap = LavaMap(input)
+        return startingPoints.maxOf(lavaMap::energize)
     }
 
     // test if implementation meets criteria from the description, like:
@@ -105,7 +103,7 @@ data class LavaMap(val rows: List<String>) {
                     else -> emptyList()
                 }
             }
-                .also { println("x: $x, y: $y, symbol: $symbol, direction: $direction, list: $it") }
+//                .also { println("x: $x, y: $y, symbol: $symbol, direction: $direction, list: $it") }
         }
 
         fun toPoint(): Pair<Int, Int> = x to y
