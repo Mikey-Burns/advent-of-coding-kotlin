@@ -26,8 +26,6 @@ fun main() {
     part2(input).println()
 }
 
-val origin = Point2D(0, 0)
-
 private val directionMap = mapOf(
     NORTH to setOf(NORTH, EAST, WEST),
     SOUTH to setOf(SOUTH, EAST, WEST),
