@@ -1,5 +1,5 @@
 import Compass.*
-import java.util.PriorityQueue
+import java.util.*
 
 fun main() {
     fun part1(input: List<String>): Int {
@@ -9,14 +9,17 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return 0
+        return HeatGrid(input).calculateHeatLoss { state, direction ->
+            (state.direction == direction && state.steps <= 10)
+                    || (state.direction != direction && state.steps in 4..10)
+        }
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day17_test")
     check(part1(testInput).also(::println) == 102)
     val testInput2 = readInput("Day17_test")
-    check(part2(testInput2).also(::println) == 0)
+    check(part2(testInput2).also(::println) == 94)
 
     val input = readInput("Day17")
     part1(input).println()
@@ -46,7 +49,7 @@ data class Work(val state: State, val heatLoss: Int) : Comparable<Work> {
 }
 
 data class HeatGrid(val grid: List<List<Int>>) {
-    fun calculateHeatLoss(minSteps: Int = 1, isValidNextMove: (State, Compass) -> Boolean): Int {
+    fun calculateHeatLoss(isValidNextMove: (State, Compass) -> Boolean): Int {
         val end = Point2D(grid.first().lastIndex, grid.lastIndex)
         val visited = mutableSetOf<State>()
         val queue = PriorityQueue<Work>()
@@ -59,7 +62,7 @@ data class HeatGrid(val grid: List<List<Int>>) {
 
         while (queue.isNotEmpty()) {
             val (current, heatLoss) = queue.poll()
-            if (current.location == end && current.steps >= minSteps) return heatLoss
+            if (current.location == end) return heatLoss
 
             directionMap
                 .getValue(current.direction)
