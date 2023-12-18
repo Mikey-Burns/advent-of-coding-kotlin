@@ -1,4 +1,11 @@
+package day17
+
+import Compass
 import Compass.*
+import Point2D
+import isInBounds
+import println
+import readInput
 import java.util.*
 
 fun main() {

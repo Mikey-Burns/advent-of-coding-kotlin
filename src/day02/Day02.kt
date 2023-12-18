@@ -1,3 +1,8 @@
+package day02
+
+import println
+import readInput
+
 fun main() {
     fun part1(input: List<String>): Int {
         return input.map(::stringToGame)
@@ -47,7 +52,8 @@ data class Game(val id: Int, val rounds: List<Round>) {
         maxOf(r1.red, r2.red),
         maxOf(r1.green, r2.green),
         maxOf(r1.blue, r2.blue)
-    )}
+    )
+    }
 }
 
 data class Round(val red: Int, val green: Int, val blue: Int) {

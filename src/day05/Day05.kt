@@ -1,3 +1,8 @@
+package day05
+
+import println
+import readInput
+
 fun main() {
     fun part1(input: List<String>): Long {
         val seeds: List<Long> = input[0].split(" ").mapNotNull { it.toLongOrNull() }

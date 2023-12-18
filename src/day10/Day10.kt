@@ -1,3 +1,8 @@
+package day10
+
+import println
+import readInput
+
 fun main() {
     fun part1(input: List<String>): Int {
         return PipeMaze(input)

@@ -1,3 +1,9 @@
+package day08
+
+import lcm
+import println
+import readInput
+
 fun main() {
     fun part1(input: List<String>): Int {
         return Maze(input)

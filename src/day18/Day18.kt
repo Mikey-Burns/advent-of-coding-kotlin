@@ -1,3 +1,9 @@
+package day18
+
+import Compass
+import Point2D
+import println
+import readInput
 import kotlin.math.abs
 
 fun main() {

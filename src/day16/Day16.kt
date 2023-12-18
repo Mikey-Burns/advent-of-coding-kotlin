@@ -1,3 +1,7 @@
+package day16
+
+import println
+import readInput
 import java.util.*
 
 fun main() {

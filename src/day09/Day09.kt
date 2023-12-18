@@ -1,3 +1,8 @@
+package day09
+
+import println
+import readInput
+
 fun main() {
     fun part1(input: List<String>): Int {
         return input.map { parseLine(it) }
