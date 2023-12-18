@@ -1,13 +1,11 @@
+import Compass.*
+import java.util.PriorityQueue
+
 fun main() {
     fun part1(input: List<String>): Int {
-        val graph = Graph(input)
-        val start = DPoint(0, 0, input.first().first().digitToInt())
-        val end = DPoint(input.lastIndex, input.last().lastIndex, input.last().last().digitToInt())
-        val tree = dijkstra(graph, start)
-        val path = shortestPath(tree, start, end)
-        val heatLoss = path.sumOf(DPoint::heatLoss)
-        println(heatLoss)
-        return 0
+        return HeatGrid(input).calculateHeatLoss { state, direction ->
+            state.steps < 3 || state.direction != direction
+        }
     }
 
     fun part2(input: List<String>): Int {
@@ -25,68 +23,59 @@ fun main() {
     part2(input).println()
 }
 
-data class DPoint(val x: Int, val y: Int, val heatLoss: Int)
+val origin = Point2D(0, 0)
 
-data class Graph(
-    val vertices: Set<DPoint>,
-    val edges: Map<DPoint, Set<DPoint>>
+private val directionMap = mapOf(
+    NORTH to setOf(NORTH, EAST, WEST),
+    SOUTH to setOf(SOUTH, EAST, WEST),
+    EAST to setOf(NORTH, SOUTH, EAST),
+    WEST to setOf(NORTH, SOUTH, WEST),
 )
 
-fun Graph(input: List<String>): Graph {
-    val vertices: Set<DPoint> = input.flatMapIndexed() { rowIndex, row ->
-        row.mapIndexed { columnIndex, c ->
-            DPoint(rowIndex, columnIndex, c.digitToInt())
+data class State(val location: Point2D, val direction: Compass, val steps: Int) {
+    fun next(nextStep: Compass) = State(
+        location.step(nextStep),
+        nextStep,
+        if (direction == nextStep) steps + 1 else 1
+    )
+}
+
+data class Work(val state: State, val heatLoss: Int) : Comparable<Work> {
+    override fun compareTo(other: Work): Int = heatLoss - other.heatLoss
+
+}
+
+data class HeatGrid(val grid: List<List<Int>>) {
+    fun calculateHeatLoss(minSteps: Int = 1, isValidNextMove: (State, Compass) -> Boolean): Int {
+        val end = Point2D(grid.first().lastIndex, grid.lastIndex)
+        val visited = mutableSetOf<State>()
+        val queue = PriorityQueue<Work>()
+
+        val start = Point2D(0, 0)
+        val startingState = State(start, EAST, 0)
+
+        queue.add(Work(startingState, 0))
+        visited.add(startingState)
+
+        while (queue.isNotEmpty()) {
+            val (current, heatLoss) = queue.poll()
+            if (current.location == end && current.steps >= minSteps) return heatLoss
+
+            directionMap
+                .getValue(current.direction)
+                .filter { direction -> grid.isInBounds(current.location.step(direction)) }
+                .filter { direction -> isValidNextMove(current, direction) }
+                .map { direction -> current.next(direction) }
+                .filter { state -> state !in visited }
+                .forEach { state ->
+                    queue.add(Work(state, heatLoss + grid[state.location]))
+                    visited.add(state)
+                }
         }
-    }
-        .toSet()
-    val edges: Map<DPoint, Set<DPoint>> = vertices.associateWith { point ->
-        val left = vertices.firstOrNull { it.x == point.x - 1 && it.y == point.y }
-        val right = vertices.firstOrNull { it.x == point.x + 1 && it.y == point.y }
-        val up = vertices.firstOrNull { it.x == point.x && it.y == point.y - 1 }
-        val down = vertices.firstOrNull { it.x == point.x && it.y == point.y + 1 }
-
-        setOfNotNull(left, right, up, down)
+        throw IllegalStateException("Should have found a path")
     }
 
-    return Graph(vertices, edges)
+    operator fun <T> List<List<T>>.get(point: Point2D): T = this[point.y][point.x]
 }
 
-fun dijkstra(graph: Graph, start: DPoint): Map<DPoint, DPoint?> {
-    // Empty set of finished vertices because we haven't visited any points
-    val finishedVertices: MutableSet<DPoint> = mutableSetOf()
-    // Tentative heat loss is infinite for every point
-    val tentativeHeats: MutableMap<DPoint, Int> = graph.vertices.associateWith { Int.MAX_VALUE }.toMutableMap()
-    // 0 heat loss to get to our starting point
-    tentativeHeats[start] = 0
-    // No established paths anywhere yet
-    val previousHeats: MutableMap<DPoint, DPoint?> = graph.vertices.associateWith { null }.toMutableMap()
-    // Loop until we have finished every point
-    while (finishedVertices != graph.vertices) {
-        val currentPoint: DPoint = tentativeHeats
-            .filterNot { finishedVertices.contains(it.key) }
-            .minBy { it.value }
-            .key
-
-        graph.edges.getValue(currentPoint).minus(finishedVertices).forEach { neighbor: DPoint ->
-            val newPath: Int = tentativeHeats.getValue(currentPoint) + neighbor.heatLoss
-
-            if (newPath < tentativeHeats.getValue(neighbor)) {
-                tentativeHeats[neighbor] = newPath
-                previousHeats[neighbor] = currentPoint
-            }
-        }
-
-        finishedVertices.add(currentPoint)
-    }
-
-    return previousHeats.toMap()
-}
-
-fun shortestPath(tree: Map<DPoint, DPoint?>, start: DPoint, end: DPoint): List<DPoint> {
-    fun pathTo(start: DPoint, end: DPoint): List<DPoint> {
-        if (tree[end] == null) return listOf(end)
-        return listOf(pathTo(start, tree[end]!!), listOf(end)).flatten()
-    }
-
-    return pathTo(start, end)
-}
+fun HeatGrid(input: List<String>): HeatGrid = input.map { it.map(Char::digitToInt) }.let(::HeatGrid)
