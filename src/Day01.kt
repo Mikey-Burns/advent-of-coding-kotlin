@@ -32,13 +32,12 @@ private val numberPairs = listOf(
     "eight" to 8,
     "nine" to 9
 )
-fun transformToDigits(line: String): String {
-    val builder = StringBuilder()
+
+fun transformToDigits(line: String): String = buildString {
     for (index in line.indices) {
-        if (line[index].isDigit()) builder.append(line[index])
+        if (line[index].isDigit()) append(line[index])
         for ((number, digit) in numberPairs) {
-            if (line.substring(index).startsWith(number)) builder.append(digit)
+            if (line.substring(index).startsWith(number)) append(digit)
         }
     }
-    return builder.toString()
 }
