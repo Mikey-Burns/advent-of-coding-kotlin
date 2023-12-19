@@ -133,26 +133,11 @@ private data class Rule(
     }
 }
 
-private enum class Compare {
-    LESS, MORE
-}
-
 private fun Rule(s: String): Rule {
     val field = if (s.contains(":")) s.first() else null
     val range = if (s.contains(":")) {
-        val compare = when (s[1]) {
-            '<' -> Compare.LESS
-            '>' -> Compare.MORE
-            else -> error("Bad symbol")
-        }
         val target = s.drop(2).substringBefore(":").toLong()
-        when (s.first()) {
-            'x' -> if (compare == Compare.LESS) MIN..<target else (target + 1)..MAX
-            'm' -> if (compare == Compare.LESS) MIN..<target else (target + 1)..MAX
-            'a' -> if (compare == Compare.LESS) MIN..<target else (target + 1)..MAX
-            's' -> if (compare == Compare.LESS) MIN..<target else (target + 1)..MAX
-            else -> error("Bad field")
-        }
+        if (s[1] == '<') MIN..<target else (target + 1)..MAX
     } else MIN..MAX
 
     val destination = s.substringAfter(":")
