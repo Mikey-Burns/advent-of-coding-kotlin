@@ -54,15 +54,17 @@ private data class PartFactory(val workflows: List<Workflow>, val parts: List<Pa
         workflowValues: WorkflowValues = WorkflowValues()
     ): Long {
         var values = workflowValues
-        var sum = 0L
-        for (rule in workflow.rules) {
-            if (workflow.name == "R") return 0
-            if (workflow.name == "A") return values.combos()
-            val (included, excluded) = rule.updateValidValues(values)
-            values = excluded
-            sum += findCombos(workflowMap.getValue(rule.destination), included)
+        return workflow.rules.sumOf { rule ->
+            when (workflow.name) {
+                "R" -> 0
+                "A" -> values.combos()
+                else -> {
+                    val (included, excluded) = rule.updateValidValues(values)
+                    values = excluded
+                    findCombos(workflowMap.getValue(rule.destination), included)
+                }
+            }
         }
-        return sum
     }
 }
 
