@@ -5,6 +5,7 @@ import day20.Propagator.Module.FlipFlop.FlipFlopState.OFF
 import day20.Propagator.Module.FlipFlop.FlipFlopState.ON
 import day20.Pulse.HIGH
 import day20.Pulse.LOW
+import lcm
 import println
 import readInput
 import java.util.*
@@ -19,14 +20,20 @@ fun main() {
     }
 
     fun part2(input: List<String>): Long {
-        return 0L
+        val propagator = Propagator(input)
+        val gq = propagator.modules.getValue("gq") as Conjunction
+        var iteration = 1
+        while (!gq.allCyclesFound) {
+            propagator.pushTheButton(iteration++)
+        }
+        return gq.cycleMap.values.map { it.toLong() }.lcm()
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day20_test")
     check(part1(testInput).also(::println) == 32000000L)
     val testInput2 = readInput("Day20_test")
-    check(part2(testInput2).also(::println) == 0L)
+//    check(part2(testInput2).also(::println) == 1L)
 
     val input = readInput("Day20")
     part1(input).println()
@@ -48,14 +55,14 @@ private const val BROADCASTER = "broadcaster"
 private data class Propagator(val modules: Map<String, Module>) {
 
 
-    fun pushTheButton(): Pair<Long, Long> {
+    fun pushTheButton(iteration: Int = 0): Pair<Long, Long> {
         var low = 0L
         var high = 0L
         pulses.add(LOW, "button", BROADCASTER)
         while (pulses.isNotEmpty()) {
             val (pulse, source, target) = pulses.poll()
             if (pulse == LOW) low++ else high++
-            modules[target]?.handlePulse(pulse, source)
+            modules[target]?.handlePulse(pulse, source, iteration)
         }
         return low to high
     }
@@ -64,13 +71,14 @@ private data class Propagator(val modules: Map<String, Module>) {
         val upstream: MutableList<String> = mutableListOf()
 
         open fun addUpstreams(upstreams: Collection<String>) = upstream.addAll(upstreams)
-        abstract fun handlePulse(pulse: Pulse, source: String)
+        abstract fun handlePulse(pulse: Pulse, source: String, iteration: Int)
 
         class Broadcaster(downstream: List<String>) : Module(BROADCASTER, downstream) {
-            override fun handlePulse(pulse: Pulse, source: String) {
+            override fun handlePulse(pulse: Pulse, source: String, iteration: Int) {
                 downstream.forEach { pulses.add(pulse, source, it) }
             }
 
+            override fun toString(): String = "BROADCASTER"
         }
 
         class FlipFlop(name: String, downstream: List<String>) : Module(name, downstream) {
@@ -84,7 +92,7 @@ private data class Propagator(val modules: Map<String, Module>) {
             }
 
             var state = OFF
-            override fun handlePulse(pulse: Pulse, source: String) {
+            override fun handlePulse(pulse: Pulse, source: String, iteration: Int) {
                 when (pulse) {
                     LOW -> {
                         when (state) {
@@ -101,20 +109,29 @@ private data class Propagator(val modules: Map<String, Module>) {
                 }
             }
 
+            override fun toString(): String = "{$name - FlipFlop - parents: ${upstream}}"
         }
 
         class Conjunction(name: String, downstream: List<String>) : Module(name, downstream) {
             val previousPulses: MutableMap<String, Pulse> = mutableMapOf()
+            val cycleMap: MutableMap<String, Int> = mutableMapOf()
+            val allCyclesFound: Boolean
+                get() = cycleMap.size == previousPulses.size
 
             override fun addUpstreams(upstreams: Collection<String>) = super.addUpstreams(upstreams)
                 .also { upstreams.forEach { previousPulses[it] = LOW } }
 
-            override fun handlePulse(pulse: Pulse, source: String) {
+            override fun handlePulse(pulse: Pulse, source: String, iteration: Int) {
                 previousPulses[source] = pulse
+                // We need to find when all inputs are high
+                // Inputs are high on consistent cycles, so find the iteration when they're high
+                if (pulse == HIGH && source !in cycleMap) cycleMap[source] = iteration
                 val outPulse = if (previousPulses.values.all { it == HIGH }) LOW else HIGH
                 downstream.forEach { target -> pulses.add(outPulse, name, target) }
             }
 
+            override fun toString(): String =
+                "{$name - Conjunction - parents: ${upstream}}"
         }
     }
 }
@@ -132,5 +149,5 @@ private fun Propagator(input: List<String>): Propagator {
     modules.forEach { module ->
         module.addUpstreams(modules.filter { it.downstream.contains(module.name) }.map { it.name })
     }
-    return Propagator(modules.associateBy { it.name })
+    return Propagator(modules.associateBy { it.name }.toSortedMap())
 }
