@@ -64,7 +64,11 @@ data class Point2D(val x: Int, val y: Int) {
     }
 }
 
+fun Point2D.orthogonalNeighbors(): List<Point2D> = listOf(east(), west(), north(), south())
+
 operator fun Point2D.plus(other: Point2D): Point2D = Point2D(x + other.x, y + other.y)
+
+operator fun <T> List<List<T>>.get(point: Point2D): T = this[point.y][point.x]
 
 enum class Compass {
     NORTH, EAST, SOUTH, WEST

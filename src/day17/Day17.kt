@@ -7,6 +7,7 @@ import isInBounds
 import println
 import readInput
 import java.util.*
+import get
 
 fun main() {
     fun part1(input: List<String>): Int {
@@ -82,8 +83,6 @@ data class HeatGrid(val grid: List<List<Int>>) {
         }
         throw IllegalStateException("Should have found a path")
     }
-
-    operator fun <T> List<List<T>>.get(point: Point2D): T = this[point.y][point.x]
 }
 
 fun HeatGrid(input: List<String>): HeatGrid = input.map { it.map(Char::digitToInt) }.let(::HeatGrid)
