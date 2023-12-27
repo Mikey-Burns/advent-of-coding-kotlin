@@ -11,8 +11,10 @@ fun main() {
         return blocks.size - blocks.loadBearing().size
     }
 
-    fun part2(input: List<String>): Int {
-        return 0
+    fun part2(input: List<String>, letterBased: Boolean): Int {
+        val blocks = processBlocks(input, letterBased)
+
+        return blocks.loadBearing().sumOf { it.chainReaction(blocks) }
     }
 
     // test if implementation meets criteria from the description, like:
@@ -21,11 +23,11 @@ fun main() {
     check(part1(testInput, true).also(::println) == 5)
     check(part1(testInputShuffle, true).also(::println) == 5)
     val testInput2 = readInput("Day22_test")
-    check(part2(testInput2).also(::println) == 0)
+    check(part2(testInput2, true).also(::println) == 7)
 
     val input = readInput("Day22")
     part1(input, false).println()
-    part2(input).println()
+    part2(input, false).println()
 }
 
 private fun processBlocks(input: List<String>, letterBased: Boolean): List<Block> {
@@ -51,6 +53,24 @@ private data class Block(val name: String, val x: IntRange, val y: IntRange, val
     fun onGround(): Boolean = z.first == BOTTOM_HEIGHT
 
     fun fall(height: Int): Block = copy(z = height..(height + z.size))
+
+    fun chainReaction(allBlocks: List<Block>): Int {
+        val removedBlocks = mutableSetOf(this)
+        val hasNotFallenYet = (allBlocks - this).toMutableSet()
+        val falling = mutableSetOf(this)
+        while (falling.isNotEmpty()) {
+            hasNotFallenYet.filter { it.supportedBy.isNotEmpty() }
+                .filter { it.supportedBy.all { support -> support in removedBlocks } }
+                .also {
+                    hasNotFallenYet.removeAll(it.toSet())
+                    removedBlocks.addAll(it)
+
+                    falling.clear()
+                    falling.addAll(it)
+                }
+        }
+        return removedBlocks.size - 1
+    }
 
     companion object {
         const val BOTTOM_HEIGHT = 1
