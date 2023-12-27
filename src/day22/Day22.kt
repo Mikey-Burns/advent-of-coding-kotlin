@@ -1,13 +1,14 @@
 package day22
 
+import day22.Block.Companion.BOTTOM_HEIGHT
 import println
 import readInput
-import utils.Point3D
 
 fun main() {
     fun part1(input: List<String>, letterBased: Boolean): Int {
-        val sandGrid = SandGrid(input, letterBased)
-        return sandGrid.canBeDisintegrated()
+        val blocks = processBlocks(input, letterBased)
+
+        return blocks.size - blocks.loadBearing().size
     }
 
     fun part2(input: List<String>): Int {
@@ -27,62 +28,70 @@ fun main() {
     part2(input).println()
 }
 
-private data class SandGrid(val grid: MutableMap<Point3D, String>) {
+private fun processBlocks(input: List<String>, letterBased: Boolean): List<Block> {
+    return input.mapIndexed { index, line -> Block(index, line, letterBased) }
+        .sorted()
+        .collapse()
+}
 
-    fun canBeDisintegrated(): Int {
-        // Find lower neighbors
-        val lower: Map<String, List<String>> = grid.values.associateWith { name ->
-            // For each block...
-            grid.filterValues { it == name }.keys
-                // Find the blocks above
-                .mapNotNull { grid[it + Point3D.BELOW] }
-                // Ignore self
-                .filter { it != name }
-        }
-        // Can disintegrate if we are not the only lower neighbor for anyone
-        return grid.values.filter { name ->
-            lower.values.all { low ->
-                (low.contains(name) && low.size > 1) || !low.contains(name)
-            }
-        }
-            .toSet()
-            .size
+private data class Block(val name: String, val x: IntRange, val y: IntRange, val z: IntRange) : Comparable<Block> {
+    val supporting = mutableSetOf<Block>()
+    val supportedBy = mutableSetOf<Block>()
+
+    override fun compareTo(other: Block): Int = z.first - other.z.first
+
+    fun beUnder(other: Block) {
+        supporting += other
+        other.supportedBy += this
+    }
+
+    fun canSupport(other: Block): Boolean =
+        x intersects other.x && y intersects other.y && z.last + 1 == other.z.first
+
+    fun onGround(): Boolean = z.first == BOTTOM_HEIGHT
+
+    fun fall(height: Int): Block = copy(z = height..(height + z.size))
+
+    companion object {
+        const val BOTTOM_HEIGHT = 1
     }
 }
 
-private fun SandGrid(input: List<String>, letterBased: Boolean): SandGrid {
-    val grid = mutableMapOf<Point3D, String>()
-    val rawBlocks = input.mapIndexed { index, line ->
-        val (left, right) = line.split("~")
-        val (leftX, leftY, leftZ) = left.split(",").map(String::toInt)
-        val (rightX, rightY, rightZ) = right.split(",").map(String::toInt)
-        val blocks = when {
-            leftX < rightX -> (leftX..rightX)
-                .map { x -> Point3D(x, leftY, leftZ) }
-
-            leftY < rightY -> (leftY..rightY)
-                .map { y -> Point3D(leftX, y, leftZ) }
-
-            leftZ < rightZ -> (leftZ..rightZ)
-                .map { z -> Point3D(leftX, leftY, z) }
-
-            else -> listOf(Point3D(leftX, leftY, leftZ))
-        }
-            .toMutableList()
-        index to blocks
-    }
-    
-    
-    
-    rawBlocks
-        .sortedBy { (_, blocks) -> blocks.minOf { block -> block.z } }
-        .forEach { (index, blocks) ->
-            val name = if (letterBased) "Block-${'A' + index}" else "Block-${index + 1}"
-            while (blocks.none { it.z == 1 || grid[it + Point3D.BELOW] != null }) {
-                blocks.replaceAll { it + Point3D.BELOW }
-            }
-            blocks.forEach { grid[it] = name }
-        }
-    grid.entries.sortedBy { it.key.z }.forEach(::println)
-    return SandGrid(grid)
+private fun Block(index: Int, line: String, letterBased: Boolean): Block {
+    val name = if (letterBased) "Block-${'A' + index}" else "Block-${index + 1}"
+    val (left, right) = line.split("~")
+    val (leftX, leftY, leftZ) = left.split(",").map(String::toInt)
+    val (rightX, rightY, rightZ) = right.split(",").map(String::toInt)
+    return Block(name, leftX..rightX, leftY..rightY, leftZ..rightZ)
 }
+
+infix fun IntRange.intersects(other: IntRange): Boolean =
+    first <= other.last && last >= other.first
+
+val IntRange.size: Int
+    get() = this.last - first
+
+private fun List<Block>.collapse(): List<Block> {
+    val settledBlocks = mutableListOf<Block>()
+    this.forEach { block ->
+        var current = block
+        var settled = false
+        while (!settled) {
+            val supporters = settledBlocks.filter { below -> below.canSupport(current) }
+            // If there are no settled blocks below us, and we aren't on the ground
+            if (supporters.isEmpty() && !current.onGround()) {
+                val heightToFall = settledBlocks.filter { it.z.last < current.z.first - 1 }
+                    .maxOfOrNull { it.z.last + 1 } ?: BOTTOM_HEIGHT
+                current = current.fall(heightToFall)
+            } else {
+                settled = true
+                supporters.forEach { below -> below.beUnder(current) }
+                settledBlocks.add(current)
+            }
+        }
+    }
+    return settledBlocks
+}
+
+private fun List<Block>.loadBearing(): List<Block> =
+    filter { block -> block.supporting.any { it.supportedBy.size == 1 } }
