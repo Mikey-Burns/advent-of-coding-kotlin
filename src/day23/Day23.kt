@@ -7,6 +7,7 @@ import orthogonalNeighbors
 import println
 import readInput
 import utils.DijkstraGraph
+import kotlin.math.max
 
 fun main() {
     fun part1(input: List<String>): Int {
@@ -14,11 +15,7 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        val iceMaze = IceMaze(input)
-        val graph = iceMaze.gridToGraph(false)
-        val idealMap = graph.longestPathTree(iceMaze.start)
-        val longestPath = graph.idealPath(idealMap, iceMaze.start, iceMaze.finish)
-        return graph.weightOfIdealPath(longestPath)
+        return IceMaze(input).longestFlatPath()
     }
 
     // test if implementation meets criteria from the description, like:
@@ -59,6 +56,9 @@ private data class IceMaze(val maze: List<List<Char>>) {
             .filterNot { maze[it] == '#' }
     }
 
+    fun Point2D.inBoundsWalkableNeighbors(): List<Point2D> = orthogonalNeighbors()
+        .filter { maze.isInBounds(it) }
+        .filterNot { maze[it] == '#' }
 
     fun longestPath(path: List<Point2D> = listOf(start)): Int =
         with(path.last()) {
@@ -79,7 +79,7 @@ private data class IceMaze(val maze: List<List<Char>>) {
                 ?: 0
         }
 
-    fun gridToGraph(steepSlopes: Boolean): DijkstraGraph<Point2D> {
+    fun longestFlatPath(): Int {
         val vertices: Set<Point2D> = (maze.first().indices)
             .flatMap { x ->
                 (maze.indices)
@@ -94,41 +94,41 @@ private data class IceMaze(val maze: List<List<Char>>) {
             }
             .toSet()
 
-        val pointToPathMap: Map<Point2D, List<Set<Point2D>>> =
-            (if (steepSlopes) vertices - finish else vertices)
-                .associateWith { vertex ->
-                    vertex.validNeighbors(steepSlopes)
-                        .map { neighbor ->
-                            val path = mutableSetOf(vertex, neighbor)
-                            while (path.last() !in vertices) {
-                                path.last().validNeighbors(steepSlopes)
-                                    .filterNot { it in path }
-                                    .also(path::addAll)
-                            }
-                            path.toSet()
+        val graph: Map<Point2D, Map<Point2D, Int>> =
+            vertices.associateWith { vertex ->
+                vertex.inBoundsWalkableNeighbors()
+                    .associate { neighbor ->
+                        val path = mutableSetOf(vertex, neighbor)
+                        while (path.last() !in vertices) {
+                            path.last()
+                                .inBoundsWalkableNeighbors()
+                                .filterNot { it in path }
+                                .single()
+                                .also(path::add)
                         }
-                }
-
-        val edges: Map<Point2D, Set<Point2D>> = pointToPathMap
-            .map { (point, listOfSets) ->
-                point to listOfSets.map { it.last() }.toSet()
+                        (path.last() to path.size - 1)
+                    }
             }
-            .toMutableList()
-            .apply {
-                if (steepSlopes) {
-                    add(finish to setOf(this.single { it.second.contains(finish) }.first))
-                }
-            }
-            .toMap()
 
-        val weights: Map<Pair<Point2D, Point2D>, Int> = pointToPathMap
-            .flatMap { (point, listOfSets) ->
-                listOfSets.map { set -> (point to set.last()) to (set.size - 1) }
-            }
-            .toMap()
+        var best = 0
+        val visited = mutableSetOf<Point2D>()
 
-        return DijkstraGraph(vertices, edges, weights)
+        fun dfs(location: Point2D, steps: Int): Int {
+            if (location == finish) {
+                best = max(steps, best)
+                return best
+            }
+            visited += location
+            graph.getValue(location)
+                .filter { (nextLocation, distance) -> nextLocation !in visited }
+                .forEach { (nextLocation, distance) -> dfs(nextLocation, distance + steps) }
+            visited -= location
+            return best
+        }
+
+        return dfs(start, 0)
     }
+
 }
 
 private fun IceMaze(input: List<String>): IceMaze = input.map(String::toList).let(::IceMaze)
