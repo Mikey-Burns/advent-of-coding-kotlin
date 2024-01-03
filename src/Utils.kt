@@ -77,7 +77,7 @@ enum class Compass {
 fun List<List<*>>.isInBounds(location: Point2D) = location.y in this.indices
         && location.x in this[location.y].indices
 
-fun <T> List<T>.uniquePairs(): List<Pair<T, T>> = this.flatMapIndexed { index, first ->
+fun <T> Collection<T>.uniquePairs(): List<Pair<T, T>> = this.flatMapIndexed { index, first ->
     this.filterIndexed { innerIndex, _ -> index < innerIndex }
         .map { second -> first to second }
 }
