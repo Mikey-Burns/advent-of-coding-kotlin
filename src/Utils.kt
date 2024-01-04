@@ -1,3 +1,4 @@
+import utils.Point2D
 import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.io.path.Path
@@ -6,7 +7,7 @@ import kotlin.io.path.readLines
 /**
  * Reads lines from the given input txt file.
  */
-fun readInput(name: String) = Path("src/${name.substringBefore("_").lowercase()}/$name.txt").readLines()
+fun readInput(name: String, year: String = "2023") = Path("src/year$year/${name.substringBefore("_").lowercase()}/$name.txt").readLines()
 
 /**
  * Converts string to md5 hash.
@@ -50,32 +51,7 @@ fun List<Long>.lcm(): Long = this.fold(1, Long::lcm)
 
 // endregion
 
-data class Point2D(val x: Int, val y: Int) {
-    fun east(): Point2D = copy(x = x + 1)
-    fun west(): Point2D = copy(x = x - 1)
-    fun north(): Point2D = copy(y = y - 1)
-    fun south(): Point2D = copy(y = y + 1)
-
-    fun step(direction: Compass): Point2D = when (direction) {
-        Compass.NORTH -> north()
-        Compass.EAST -> east()
-        Compass.SOUTH -> south()
-        Compass.WEST -> west()
-    }
-}
-
-fun Point2D.orthogonalNeighbors(): List<Point2D> = listOf(east(), west(), north(), south())
-
-operator fun Point2D.plus(other: Point2D): Point2D = Point2D(x + other.x, y + other.y)
-
 operator fun <T> List<List<T>>.get(point: Point2D): T = this[point.y][point.x]
-
-enum class Compass {
-    NORTH, EAST, SOUTH, WEST
-}
-
-fun List<List<*>>.isInBounds(location: Point2D) = location.y in this.indices
-        && location.x in this[location.y].indices
 
 fun <T> Collection<T>.uniquePairs(): List<Pair<T, T>> = this.flatMapIndexed { index, first ->
     this.filterIndexed { innerIndex, _ -> index < innerIndex }

@@ -2,7 +2,7 @@ package utils
 
 data class Point3D(val x: Int, val y: Int, val z: Int) {
 
-    operator fun plus(other: Point3D): Point3D = 
+    operator fun plus(other: Point3D): Point3D =
         Point3D(x + other.x, y + other.y, z + other.z)
 
     operator fun minus(other: Point3D): Point3D =
