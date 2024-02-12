@@ -22,3 +22,10 @@ enum class Compass {
 
 fun List<List<*>>.isInBounds(location: Point2D) = location.y in this.indices
         && location.x in this[location.y].indices
+
+object Directions {
+    val NORTH = Point2D(0, -1)
+    val EAST = Point2D(1, 0)
+    val SOUTH = Point2D(0, 1)
+    val WEST = Point2D(-1, 0)
+}
