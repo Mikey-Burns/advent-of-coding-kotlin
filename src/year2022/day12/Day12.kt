@@ -8,6 +8,7 @@ import utils.Point2D
 import utils.isInBounds
 import utils.orthogonalNeighbors
 import java.awt.Point
+import java.util.LinkedList
 import kotlin.math.min
 
 fun main() {
@@ -15,7 +16,7 @@ fun main() {
         input.useDijkstra { source, destination ->
             when {
                 source == 'S' -> destination in 'a'..'b'
-                destination == 'E' -> source == 'z'
+                destination == 'E' -> source in 'y'..'z'
                 else -> destination in 'a'..(source + 1)
             }
         }
@@ -43,6 +44,8 @@ private fun List<String>.findPath(validStep: (Char, Char) -> Boolean): Long {
 
     var best = Long.MAX_VALUE
     val visited = mutableSetOf<Point2D>()
+    val toVisit = LinkedList<Pair<Point2D, Long>>()
+        .apply { add(start to 0) }
 
     fun dfs(location: Point2D, steps: Long): Long {
         val currentChar = points[location]
@@ -60,7 +63,25 @@ private fun List<String>.findPath(validStep: (Char, Char) -> Boolean): Long {
         return best
     }
 
-    return dfs(start, 0L)
+    fun bfs(): Long {
+        while (toVisit.isNotEmpty()) {
+            val (location, steps) = toVisit.pop()
+            val currentChar = points[location]
+            if (currentChar == 'E') {
+                return steps
+            }
+            visited += location
+            location.orthogonalNeighbors()
+                .filter { points.isInBounds(it) }
+                .filterNot { it in visited }
+                .filterNot { toVisit.map(Pair<Point2D, Long>::first).contains(it) }
+                .filter { validStep(currentChar, points[it]) }
+                .forEach { toVisit.add(it to steps + 1) }
+        }
+        return -1L
+    }
+
+    return bfs()
 }
 
 private fun List<String>.useDijkstra(validStep: (Char, Char) -> Boolean): Long {
@@ -83,11 +104,6 @@ private fun List<String>.useDijkstra(validStep: (Char, Char) -> Boolean): Long {
     val end = points.find('E')
     val tree = graph.shortestPathTree(start)
     val idealPath = graph.idealPath(tree, start, end)
-
-    this.indices.forEach { y -> this.first().toList().indices.map { x -> Point2D(x, y) }
-        .joinToString("") { point -> if (point in idealPath) "X" else " "}
-        .let(::println)
-    }
 
     return idealPath.size.toLong() - 1L
 }
