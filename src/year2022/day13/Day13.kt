@@ -10,15 +10,17 @@ fun main() {
         .mapIndexed { index, pair -> if (pair.inRightOrder()) index + 1L else 0L }
         .sum()
 
-    fun part2(input: List<String>): Long {
-        return 0L
-    }
+    fun part2(input: List<String>): Long = input.filter(String::isNotEmpty).map(String::toPacket)
+        .let { it + Group(2) + Group(6) }
+        .sortedWith { left, right -> if (left.inRightOrder(right)) -1 else 1 }
+        .let { (it.indexOf(Group(2)) + 1) * (it.indexOf(Group(6)) + 1) }
+        .toLong()
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day13_test", "2022")
     check(part1(testInput).also(::println) == 13L)
     val testInput2 = readInput("Day13_test", "2022")
-    check(part2(testInput2).also(::println) == 0L)
+    check(part2(testInput2).also(::println) == 140L)
 
     val input = readInput("Day13", "2022")
     part1(input).println()
@@ -39,6 +41,7 @@ private sealed interface Packet {
 
     data class Group(val packets: List<Packet>) : Packet {
         constructor(packet: Packet) : this(listOf(packet))
+        constructor(value: Int) : this(Value(value))
 
         private fun dropOne() = copy(packets = packets.drop(1))
         override fun inRightOrder(right: Packet): Boolean {
