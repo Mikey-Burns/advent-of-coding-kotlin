@@ -1,5 +1,6 @@
 package year2022.day14
 
+import kotlinx.coroutines.yield
 import println
 import readInput
 import utils.Point2D
@@ -10,14 +11,16 @@ fun main() {
     fun part1(input: List<String>): Long = dropSand(input.formRocks())
 
     fun part2(input: List<String>): Long {
-        return 0L
+        val rocks = input.formRocks()
+        val floor = rocks.maxOf { it.y } + 2
+        return dropSand(rocks + (-2000..2500).map { x -> Point2D(x, floor) })
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day14_test", "2022")
     check(part1(testInput).also(::println) == 24L)
     val testInput2 = readInput("Day14_test", "2022")
-    check(part2(testInput2).also(::println) == 0L)
+    check(part2(testInput2).also(::println) == 93L)
 
     val input = readInput("Day14", "2022")
     part1(input).println()
@@ -41,7 +44,8 @@ fun Pair<Point2D, Point2D>.connectingPoints(): Set<Point2D> = when {
 }
     .toSet()
 
-fun dropSand(rocks: Set<Point2D>, start: Point2D = Point2D(500, 0)): Long {
+fun dropSand(rocks: Set<Point2D>): Long {
+    val start = Point2D(500, 0)
     val sand = mutableSetOf<Point2D>()
 
     fun localSand(currentLocation: Point2D): Point2D? {
@@ -60,7 +64,11 @@ fun dropSand(rocks: Set<Point2D>, start: Point2D = Point2D(500, 0)): Long {
     }
 
     return generateSequence {
-        localSand(start)
+        if (start !in sand) {
+            localSand(start)
+        } else {
+            null
+        }
     }
         .count()
         .toLong()
