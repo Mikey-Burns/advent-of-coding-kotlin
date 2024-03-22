@@ -1,5 +1,7 @@
 package utils
 
+import kotlin.math.abs
+
 data class Point2D(val x: Int, val y: Int) {
     fun east(): Point2D = copy(x = x + 1)
     fun west(): Point2D = copy(x = x - 1)
@@ -29,3 +31,5 @@ object Directions {
     val SOUTH = Point2D(0, 1)
     val WEST = Point2D(-1, 0)
 }
+
+fun Point2D.manhattanDistance(other: Point2D): Int = abs(x - other.x) + abs(y - other.y)
