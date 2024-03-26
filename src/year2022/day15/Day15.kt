@@ -5,6 +5,7 @@ import readInput
 import utils.Point2D
 import utils.manhattanDistance
 import utils.plus
+import kotlin.math.abs
 
 fun main() {
     fun part1(input: List<String>, row: Int): Long = input.toPointsMap().invalidPositionsInRow(row)
@@ -24,20 +25,6 @@ fun main() {
     part2(input).println()
 }
 
-private fun Point2D.pointsInRange(maxDistance: Int): Set<Point2D> = (0..maxDistance)
-    .flatMap { x ->
-        (0..(maxDistance - x)).flatMap { y ->
-            listOf(
-                x to y,
-                x to -y,
-                -x to y,
-                -x to -y
-            )
-        }
-    }
-    .map { this + Point2D(it.first, it.second) }
-    .toSet()
-
 private fun List<String>.toPointsMap(): Map<Point2D, Point2D> = this.associate { line ->
     val sensorX = line.substringAfter("Sensor at x=").substringBefore(",").toInt()
     val sensorY = line.substringAfter(", y=").substringBefore(":").toInt()
@@ -46,12 +33,15 @@ private fun List<String>.toPointsMap(): Map<Point2D, Point2D> = this.associate {
     Point2D(sensorX, sensorY) to Point2D(beaconX, beaconY)
 }
 
-private fun Map<Point2D, Point2D>.invalidPositionsInRow(row: Int): Long =
-    entries.flatMap { (sensor, beacon) ->
-        sensor.pointsInRange(sensor.manhattanDistance(beacon))
-            .filter { it.y == row }
+private fun Map<Point2D, Point2D>.invalidPositionsInRow(row: Int): Long {
+    val beaconX = values.filter { it.y == row }.map { it.x }.toSet()
+    val invalidX = entries.flatMap { (sensor, beacon) ->
+        val manhattan = sensor.manhattanDistance(beacon)
+        val toRow = abs(sensor.y - row)
+        val offset = manhattan - toRow
+
+        if (offset >= 0) (sensor.x - offset)..(sensor.x + offset) else emptySet()
     }
         .toSet()
-        .let { it - values.toSet() }
-        .count()
-        .toLong()
+    return (invalidX - beaconX).count().toLong()
+}
