@@ -7,7 +7,8 @@ import kotlin.io.path.readLines
 /**
  * Reads lines from the given input txt file.
  */
-fun readInput(name: String, year: String = "2023") = Path("src/year$year/${name.substringBefore("_").lowercase()}/$name.txt").readLines()
+fun readInput(name: String, year: String = "2023") =
+    Path("src/year$year/${name.substringBefore("_").lowercase()}/$name.txt").readLines()
 
 /**
  * Converts string to md5 hash.
@@ -57,3 +58,16 @@ fun <T> Collection<T>.uniquePairs(): List<Pair<T, T>> = this.flatMapIndexed { in
     this.filterIndexed { innerIndex, _ -> index < innerIndex }
         .map { second -> first to second }
 }
+
+fun List<IntRange>.reduce(): List<IntRange> = this.sortedBy { it.first }
+    .let { sorted ->
+        if (size == 1) return this
+        sorted.drop(1).fold(mutableListOf(sorted.first())) { reduced, range ->
+            val lastRange = reduced.last()
+            if (range.first <= lastRange.last + 1)
+                reduced[reduced.lastIndex] = (lastRange.first..maxOf(lastRange.last, range.last))
+            else
+                reduced.add(range)
+            reduced
+        }
+    }
