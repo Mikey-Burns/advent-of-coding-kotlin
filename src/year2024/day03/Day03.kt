@@ -4,9 +4,9 @@ import println
 import readInput
 
 fun main() {
-    fun part1(input: List<String>): Long = input.sumOf(::multiplyLine)
+    fun part1(input: List<String>): Long = input.joinToString("").multiplyLine()
 
-    fun part2(input: List<String>): Long = input.joinToString("").let(::multiplyWithDoAndDont)
+    fun part2(input: List<String>): Long = input.joinToString("").multiplyWithDoAndDont()
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day03_test", "2024")
@@ -19,23 +19,25 @@ fun main() {
     part2(input).println()
 }
 
-private fun dosAndDonts(line: String): Pair<List<Int>, List<Int>> =
-    (listOf(0) + Regex("do\\(\\)").findAll(line).map { it.range.last }.toList()) to
-            Regex("don't\\(\\)").findAll(line).map { it.range.last }.toList()
+private fun String.dosAndDonts(): Pair<List<Int>, List<Int>> =
+    (listOf(0) + Regex("do\\(\\)").findAll(this).map { it.range.last }.toList()) to
+            Regex("don't\\(\\)").findAll(this).map { it.range.last }.toList()
 
-private fun findMultiplies(line: String) = Regex("mul\\((\\d{1,3}),(\\d{1,3})\\)").findAll(line)
+private fun String.findMultiplies() = Regex("mul\\((\\d{1,3}),(\\d{1,3})\\)").findAll(this)
 
-private fun multiplyLine(line: String): Long = findMultiplies(line)
-    .sumOf { it.groupValues[1].toLong() * it.groupValues[2].toLong() }
+private fun String.multiplyLine(): Long = findMultiplies()
+    .sumOf { it.multiplyMatchResult() }
 
-private fun multiplyWithDoAndDont(line: String): Long {
-    val (dos, donts) = dosAndDonts(line)
-    return findMultiplies(line)
+private fun String.multiplyWithDoAndDont(): Long {
+    val (dos, donts) = dosAndDonts()
+    return findMultiplies()
         .filter { matchResult ->
             val first = matchResult.range.first
             val minDo = dos.filter { it <= first }.max()
             val minDont = donts.filter { it < first }.maxOrNull()
             minDont == null || minDo > minDont
         }
-        .sumOf { it.groupValues[1].toLong() * it.groupValues[2].toLong() }
+        .sumOf { it.multiplyMatchResult() }
 }
+
+private fun MatchResult.multiplyMatchResult() = groupValues[1].toLong() * groupValues[2].toLong()
