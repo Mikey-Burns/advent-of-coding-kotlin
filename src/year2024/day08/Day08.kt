@@ -17,18 +17,16 @@ fun main() {
         .toLong()
 
 
-    fun part2(input: List<String>): Long {
-        val antennas = input.findMatchingAntenna()
-        val antinodes = antennas.values
+    fun part2(input: List<String>): Long =
+        // Include any antenna that is not alone
+        input.findMatchingAntenna().values
+            .asSequence()
             .flatMap(List<Location>::makePairs)
             .flatMap { locationPair -> locationPair.travelThroughRepeated(input) }
             .filter { location -> location.inBounds(input) }
-        // Include any antenna that is not alone
-        return (antinodes + antennas.values.filter { it.size > 1 }.flatten())
             .toSet()
             .count()
             .toLong()
-    }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day08_test", "2024")
@@ -66,7 +64,7 @@ private fun Pair<Location, Location>.travelThrough(): Location =
 private fun Pair<Location, Location>.travelThroughRepeated(input: List<String>): List<Location> {
     val deltaFirst = (second.first - first.first)
     val deltaSecond = (second.second - first.second)
-    val destinations = mutableListOf<Location>()
+    val destinations = mutableListOf(second)
     var destination = (second.first + deltaFirst) to (second.second + deltaSecond)
     while (destination.inBounds(input)) {
         destinations.add(destination)
