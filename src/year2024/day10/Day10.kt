@@ -8,21 +8,27 @@ private typealias Location = Pair<Int, Int>
 fun main() {
     fun part1(input: List<String>): Long = input.trailheadsScore()
 
-    fun part2(input: List<String>): Long = 0L
+    fun part2(input: List<String>): Long = input.trailheadsRating()
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day10_test", "2024")
     check(part1(testInput) == 36L)
     val testInput2 = readInput("Day10_test", "2024")
-    check(part2(testInput2) == 0L)
+    check(part2(testInput2) == 81L)
 
     val input = readInput("Day10", "2024")
     part1(input).println()
     part2(input).println()
 }
 
-private fun List<String>.trailheadsScore(): Long {
+
+private fun List<String>.trailheadsScore() = mapTrailheads().first
+
+private fun List<String>.trailheadsRating() = mapTrailheads().second
+
+private fun List<String>.mapTrailheads(): Pair<Long, Long> {
     val locationToTrailhead = mutableMapOf<Location, MutableSet<Location>>()
+    val locationToRating = mutableMapOf<Location, Int>()
     val valueToLocations = mapOf<Int, MutableSet<Location>>(
         0 to mutableSetOf(),
         1 to mutableSetOf(),
@@ -42,6 +48,9 @@ private fun List<String>.trailheadsScore(): Long {
             val location = rowNumber to charNumber
             if (value == 9) {
                 locationToTrailhead.computeIfAbsent(location) { mutableSetOf() }.add(location)
+                locationToRating[location] = 1
+            } else {
+                locationToRating[location] = 0
             }
             valueToLocations.getValue(value).add(location)
         }
@@ -58,13 +67,19 @@ private fun List<String>.trailheadsScore(): Long {
                     .forEach { neighbor ->
                         locationToTrailhead.computeIfAbsent(location) { mutableSetOf() }
                             .addAll(locationToTrailhead.getValue(neighbor))
+                        locationToRating[location] =
+                            locationToRating.getValue(location) + locationToRating.getValue(neighbor)
                     }
             }
     }
 
-    return valueToLocations.getValue(0)
+    val score = valueToLocations.getValue(0)
         .sumOf { trailhead -> locationToTrailhead[trailhead]?.size ?: 0 }
         .toLong()
+    val rating = valueToLocations.getValue(0)
+        .sumOf { trailhead -> locationToRating[trailhead] ?: 0 }
+        .toLong()
+    return score to rating
 
 }
 
