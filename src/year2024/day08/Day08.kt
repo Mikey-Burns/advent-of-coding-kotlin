@@ -3,7 +3,7 @@ package year2024.day08
 import println
 import readInput
 
-typealias Location = Pair<Int, Int>
+private typealias Location = Pair<Int, Int>
 
 fun main() {
     fun part1(input: List<String>): Long = input.findMatchingAntenna()
