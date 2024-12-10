@@ -27,8 +27,8 @@ private fun List<String>.trailheadsScore() = mapTrailheads().first
 private fun List<String>.trailheadsRating() = mapTrailheads().second
 
 private fun List<String>.mapTrailheads(): Pair<Long, Long> {
-    val locationToTrailhead = mutableMapOf<Location, MutableSet<Location>>()
-    val locationToRating = mutableMapOf<Location, Int>()
+    val locationToPeakInformation = mutableMapOf<Location, PeakInformation>()
+
     val valueToLocations = mapOf<Int, MutableSet<Location>>(
         0 to mutableSetOf(),
         1 to mutableSetOf(),
@@ -46,12 +46,8 @@ private fun List<String>.mapTrailheads(): Pair<Long, Long> {
         row.forEachIndexed { charNumber, c ->
             val value = c.digitToInt()
             val location = rowNumber to charNumber
-            if (value == 9) {
-                locationToTrailhead.computeIfAbsent(location) { mutableSetOf() }.add(location)
-                locationToRating[location] = 1
-            } else {
-                locationToRating[location] = 0
-            }
+
+            locationToPeakInformation[location] = if (value == 9) PeakInformation(location) else PeakInformation()
             valueToLocations.getValue(value).add(location)
         }
     }
@@ -63,25 +59,30 @@ private fun List<String>.mapTrailheads(): Pair<Long, Long> {
                 location.neighborsInBounds(this)
                     .filter { neighbor -> neighbor in valueToLocations.getValue(value + 1) }
                     // If the neighbor is unreachable from a peak, ignore it
-                    .filter { neighbor -> locationToTrailhead.contains(neighbor) }
+                    .filter { neighbor -> locationToPeakInformation.getValue(neighbor).validPeaks.isNotEmpty() }
                     .forEach { neighbor ->
-                        locationToTrailhead.computeIfAbsent(location) { mutableSetOf() }
-                            .addAll(locationToTrailhead.getValue(neighbor))
-                        locationToRating[location] =
-                            locationToRating.getValue(location) + locationToRating.getValue(neighbor)
+                        locationToPeakInformation[location] =
+                            locationToPeakInformation.getValue(location) + locationToPeakInformation.getValue(neighbor)
                     }
+
             }
     }
 
-    val score = valueToLocations.getValue(0)
-        .sumOf { trailhead -> locationToTrailhead[trailhead]?.size ?: 0 }
-        .toLong()
-    val rating = valueToLocations.getValue(0)
-        .sumOf { trailhead -> locationToRating[trailhead] ?: 0 }
-        .toLong()
-    return score to rating
-
+    return valueToLocations.getValue(0)
+        .fold(0L to 0L) { (score, rating), trailhead ->
+            val peakInformation = locationToPeakInformation.getValue(trailhead)
+            score + peakInformation.validPeaks.size to rating + peakInformation.uniquePaths
+        }
 }
+
+private data class PeakInformation(var uniquePaths: Int, val validPeaks: MutableSet<Location>) {
+
+    operator fun plus(other: PeakInformation): PeakInformation =
+        PeakInformation(uniquePaths + other.uniquePaths, validPeaks.apply { addAll(other.validPeaks) })
+}
+
+private fun PeakInformation(location: Location): PeakInformation = PeakInformation(1, mutableSetOf(location))
+private fun PeakInformation(): PeakInformation = PeakInformation(0, mutableSetOf())
 
 private fun Location.neighborsInBounds(input: List<String>): List<Location> = listOf(
     first - 1 to second,
