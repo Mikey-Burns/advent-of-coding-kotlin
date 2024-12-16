@@ -46,6 +46,7 @@ private data class Maze(val input: List<String>) {
 
     fun searchForExit(): Long {
         val turnsTaken: MutableSet<Location> = mutableSetOf()
+        val currentTurnsTaken: MutableSet<Location> = mutableSetOf()
 
         fun walkSingleLine(path: MutableList<Location>, directionToWalk: Direction): List<Pair<Path, Direction>> {
             val turningPoints: MutableList<Pair<Path, Direction>> = mutableListOf()
@@ -59,7 +60,7 @@ private data class Maze(val input: List<String>) {
                     .let { directions ->
                         if (currentLocation !in turnsTaken) {
                             directions.forEach { nextDirection -> turningPoints.add(path.toList() to nextDirection) }
-                            turnsTaken.add(currentLocation)
+                            currentTurnsTaken.add(currentLocation)
                         }
                     }
                 // Keep walking, even if it bashes into a wall
@@ -71,17 +72,18 @@ private data class Maze(val input: List<String>) {
             return turningPoints
         }
 
-        var numberOfTurns = 1
         var nextLines = walkSingleLine(mutableListOf(start), RIGHT)
         while (nextLines.none { (path, _) -> path.contains(end) }) {
-            numberOfTurns++
             nextLines = nextLines.flatMap { (path, direction) ->
                 walkSingleLine(path.toMutableList(), direction)
             }
+            turnsTaken.addAll(currentTurnsTaken)
+            currentTurnsTaken.clear()
         }
-        return nextLines.map { (path, _) -> path }
+        val pathsToExit = nextLines.map { (path, _) -> path }
             .filter { path -> path.contains(end) }
             .map { path -> path.takeWhile { location -> location != end } + end }
+        return pathsToExit
             .minOf { path -> path.score() }
 
     }
