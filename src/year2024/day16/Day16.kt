@@ -7,15 +7,26 @@ import year2024.utils.Direction.*
 
 fun main() {
     fun part1(input: List<String>): Long = Maze(input).searchForExit()
+        .minOf { path -> path.score() }
 
-    fun part2(input: List<String>): Long = 0L
+    fun part2(input: List<String>): Long {
+        val pathsToScores = Maze(input).searchForExit().associateWith { it.score() }
+        val minScore = pathsToScores.minOf { it.value }
+        return pathsToScores.filterValues { it == minScore }
+            .flatMap { (path, _) -> path }
+            .toSet()
+            .count()
+            .toLong()
+    }
+
 
     // test if implementation meets criteria from the description, like:
     val smallMaze = readInput("Day16_test", "2024")
     val bigMaze = readInput("Day16_test2", "2024")
     check(part1(smallMaze) == 7036L)
     check(part1(bigMaze) == 11048L)
-    check(part2(smallMaze) == 0L)
+    check(part2(smallMaze) == 45L)
+    check(part2(bigMaze) == 64L)
 
     val input = readInput("Day16", "2024")
     part1(input).println()
@@ -44,7 +55,7 @@ private data class Maze(val input: List<String>) {
         }
     }
 
-    fun searchForExit(): Long {
+    fun searchForExit(): List<Path> {
         val turnsTaken: MutableSet<Location> = mutableSetOf()
         val currentTurnsTaken: MutableSet<Location> = mutableSetOf()
 
@@ -80,12 +91,10 @@ private data class Maze(val input: List<String>) {
             turnsTaken.addAll(currentTurnsTaken)
             currentTurnsTaken.clear()
         }
-        val pathsToExit = nextLines.map { (path, _) -> path }
+        val exitPaths = nextLines.map { (path, _) -> path }
             .filter { path -> path.contains(end) }
             .map { path -> path.takeWhile { location -> location != end } + end }
-        return pathsToExit
-            .minOf { path -> path.score() }
-
+        return exitPaths
     }
 
     /**
