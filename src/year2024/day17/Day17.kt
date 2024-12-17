@@ -22,7 +22,7 @@ fun main() {
     part2(input).println()
 }
 
-private data class Computer(var a: Int, var b: Int, var c: Int) {
+private data class Computer(var a: Long, var b: Long, var c: Long) {
 
     fun executeInstructions(instructions: List<Int>): List<Int> {
         var counter = 0
@@ -31,8 +31,8 @@ private data class Computer(var a: Int, var b: Int, var c: Int) {
         while (counter in instructions.indices) {
             if (counter + 1 !in instructions.indices) error("Argument is beyond the end of the instructions!")
             val literal = instructions[counter + 1]
-            fun combo() = when (instructions[counter + 1]) {
-                0, 1, 2, 3 -> literal
+            fun combo(): Long = when (instructions[counter + 1]) {
+                0, 1, 2, 3 -> literal.toLong()
                 4 -> a
                 5 -> b
                 6 -> c
@@ -42,22 +42,22 @@ private data class Computer(var a: Int, var b: Int, var c: Int) {
             when (instructions[counter]) {
                 !in 0..7 -> error("Invalid instruction: ${instructions[counter]}")
                 0 -> {
-                    a /= 2.0.pow(combo()).toInt()
+                    a /= 2.0.pow(combo().toInt()).toInt()
                 }
 
-                1 -> b = b.xor(literal)
+                1 -> b = b.xor(literal.toLong())
                 2 -> b = combo() % 8
                 3 -> {
-                    if (a == 0) Unit else {
+                    if (a == 0L) Unit else {
                         // Minus 2 to counteract our automatic increment
                         counter = literal - 2
                     }
                 }
 
                 4 -> b = b.xor(c)
-                5 -> output.add(combo() % 8)
-                6 -> b = a / 2.0.pow(combo()).toInt()
-                7 -> c = a / 2.0.pow(combo()).toInt()
+                5 -> output.add(combo().toInt() % 8)
+                6 -> b = a / 2.0.pow(combo().toInt()).toInt()
+                7 -> c = a / 2.0.pow(combo().toInt()).toInt()
             }
             // Almost everything wants us to increment by 2
             counter += 2
@@ -71,9 +71,9 @@ private data class Computer(var a: Int, var b: Int, var c: Int) {
 }
 
 private fun List<String>.parseInput(): Pair<Computer, List<Int>> {
-    val a = this[0].substringAfter(": ").toInt()
-    val b = this[1].substringAfter(": ").toInt()
-    val c = this[2].substringAfter(": ").toInt()
+    val a = this[0].substringAfter(": ").toLong()
+    val b = this[1].substringAfter(": ").toLong()
+    val c = this[2].substringAfter(": ").toLong()
 
     val instructions = this.last().substringAfter(": ").split(",").map { it.toInt() }
 
