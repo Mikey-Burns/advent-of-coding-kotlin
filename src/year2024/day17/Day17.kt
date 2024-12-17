@@ -9,22 +9,46 @@ fun main() {
         .let { (computer, instructions) -> computer.executeInstructions(instructions) }
         .joinToString(",")
 
-    fun part2(input: List<String>): String = ""
+    fun part2(input: List<String>): Long = input.parseInput().second
+        .let { instructions ->
+            val toSearchFor: ArrayDeque<Pair<Int, Long>> = ArrayDeque<Pair<Int, Long>>()
+                .apply { add(instructions.lastIndex to 0L) }
+            val potentialSolutions = mutableSetOf<Long>()
+            while (toSearchFor.isNotEmpty()) {
+                val (index, targetValue) = toSearchFor.removeFirst()
+                for (lastThreeBits in 0L..7L) {
+                    val a = (targetValue shl 3) or lastThreeBits
+                    val computer = Computer(a)
+                    val output = computer.executeInstructions(instructions, true)
+
+                    if (output.first() == instructions[index] && computer.a == targetValue) {
+                        if (index == 0) {
+                            potentialSolutions.add(a)
+                        } else {
+                            toSearchFor.add(index - 1 to a)
+                        }
+                    }
+                }
+            }
+            potentialSolutions.minBy { solution ->
+                Computer(solution).executeInstructions(instructions) == instructions
+            }
+        }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day17_test", "2024")
     check(part1(testInput) == "4,6,3,5,6,3,5,2,1,0")
-    val testInput2 = readInput("Day17_test", "2024")
-    check(part2(testInput2) == "")
+    val testInput2 = readInput("Day17_test2", "2024")
+    check(part2(testInput2) == 117440L)
 
     val input = readInput("Day17", "2024")
     part1(input).println()
     part2(input).println()
 }
 
-private data class Computer(var a: Long, var b: Long, var c: Long) {
+private data class Computer(var a: Long, var b: Long = 0L, var c: Long = 0L) {
 
-    fun executeInstructions(instructions: List<Int>): List<Int> {
+    fun executeInstructions(instructions: List<Int>, shortCircuit: Boolean = false): List<Int> {
         var counter = 0
         val output = mutableListOf<Int>()
 //        println("a: $a, b: $b, c: $c, counter: $counter")
@@ -48,14 +72,14 @@ private data class Computer(var a: Long, var b: Long, var c: Long) {
                 1 -> b = b.xor(literal.toLong())
                 2 -> b = combo() % 8
                 3 -> {
-                    if (a == 0L) Unit else {
+                    if (a == 0L || shortCircuit) Unit else {
                         // Minus 2 to counteract our automatic increment
                         counter = literal - 2
                     }
                 }
 
                 4 -> b = b.xor(c)
-                5 -> output.add(combo().toInt() % 8)
+                5 -> output.add((combo() % 8L).toInt())
                 6 -> b = a / 2.0.pow(combo().toInt()).toInt()
                 7 -> c = a / 2.0.pow(combo().toInt()).toInt()
             }
