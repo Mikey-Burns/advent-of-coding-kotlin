@@ -31,25 +31,17 @@ private fun getTowels(input: List<String>): List<String> = input.first().split("
 
 private fun getCombos(input: List<String>): List<String> = input.takeLastWhile { it.isNotBlank() }
 
-private fun List<String>.countIsPossible(towels: List<String>): Long {
-    val cache: MutableMap<String, Boolean> = towels.associateWith { true }.toMutableMap()
-    fun String.isPossible(towels: List<String>): Boolean {
-        if (this in cache) return cache.getValue(this)
-        if (this.isEmpty()) return true
-        return towels.filter { towel -> this.startsWith(towel) }
-            .any { towel ->
-                val possible = this.substringAfter(towel).isPossible(towels)
-                cache[this] = possible
-                possible
-            }
-    }
+private fun List<String>.countIsPossible(towels: List<String>): Long = this.populateCacheOfPossibility(towels)
+    .values
+    .count { it > 0L }
+    .toLong()
 
-    return this.count { combo -> combo.isPossible(towels) }.toLong()
-}
+private fun List<String>.countAllPossibilities(towels: List<String>): Long = this.populateCacheOfPossibility(towels)
+    .values
+    .sum()
 
-private fun List<String>.countAllPossibilities(towels: List<String>): Long {
+private fun List<String>.populateCacheOfPossibility(towels: List<String>): Map<String, Long> {
     val cache: MutableMap<String, Long> = mutableMapOf()
-
     fun String.numberOfCombos(towels: List<String>): Long {
         if (this in cache) return cache.getValue(this)
         if (this.isEmpty()) return 1
@@ -57,6 +49,6 @@ private fun List<String>.countAllPossibilities(towels: List<String>): Long {
             .sumOf { towel -> this.substringAfter(towel).numberOfCombos(towels) }
             .also { cache[this] = it }
     }
-
-    return this.sumOf { combo -> combo.numberOfCombos(towels) }
+    this.forEach { combo -> combo.numberOfCombos(towels) }
+    return cache.filterKeys { string -> string in this }
 }
