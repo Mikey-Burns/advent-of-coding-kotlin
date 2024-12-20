@@ -8,9 +8,10 @@ import kotlin.math.min
 fun main() {
     fun part1(input: List<String>, timeToSave: Int): Int = Racetrack(input)
         .findAllCheats()
-        .count { (cheatPath, timeSaved) -> timeSaved >= timeToSave }
+        .count { (_, timeSaved) -> timeSaved >= timeToSave }
 
-    fun part2(input: List<String>): Long = 0L
+    fun part2(input: List<String>, timeToSave: Int): Int = Racetrack(input)
+        .countTwentySecondCheats(timeToSave)
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day20_test", "2024")
@@ -23,16 +24,21 @@ fun main() {
     check(part1(testInput, 60) == 1)
     check(part1(testInput, 100) == 0)
     val testInput2 = readInput("Day20_test", "2024")
-    check(part2(testInput2) == 0L)
+    check(part2(testInput2, 70) == 41)
+    check(part2(testInput2, 71) == 29)
+    check(part2(testInput2, 72) == 29)
+    check(part2(testInput2, 73) == 7)
+    check(part2(testInput2, 76) == 3)
+    check(part2(testInput2, 77) == 0)
+    check(part2(testInput2, 100) == 0)
 
     val input = readInput("Day20", "2024")
     part1(input, 100).println()
-    part2(input).println()
+    part2(input, 100).println()
 }
 
 private data class Racetrack(val input: List<String>) {
     private val start: Location = input.findLocationOfChar('S')
-    private val end: Location = input.findLocationOfChar('E')
     private val rowRange = input.indices
     private val charRange = input[0].indices
 
@@ -87,7 +93,7 @@ private data class Racetrack(val input: List<String>) {
                     down() to down().down()
                 )
                     .filter { (neighbor, destination) -> neighbor in obstacles && destination in path }
-                    .map { (neighbor, destination) ->
+                    .map { (_, destination) ->
                         val cheatPath = pathLocation to destination
                         // The time we save is the difference between the two points, minus 2
                         // We subtract 2 from time saved for the steps we take into and out of the cheat space
@@ -96,8 +102,22 @@ private data class Racetrack(val input: List<String>) {
                     }
             }
         }
-            .filter { (cheatPath, timeSaved) -> timeSaved > 0 }
+            .filter { (_, timeSaved) -> timeSaved > 0 }
             .toMap()
         return toMap
+    }
+
+    fun countTwentySecondCheats(timeToSave: Int): Int {
+        val distances = dijkstra()
+        val path = distances.filterValues { it != Int.MAX_VALUE }.keys
+
+        return path.sumOf { startCheat ->
+            path.count { endCheat ->
+                val distance = startCheat.distance(endCheat)
+                val timeSaved = (distances.getValue(endCheat) - distances.getValue(startCheat)) - distance
+
+                distance <= 20 && timeSaved >= timeToSave
+            }
+        }
     }
 }
