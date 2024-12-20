@@ -19,3 +19,6 @@ fun Location.step(direction: Direction) = when (direction) {
 enum class Direction {
     UP, DOWN, LEFT, RIGHT
 }
+
+fun List<String>.findLocationOfChar(char: Char): Location = this.indexOfFirst { line -> line.contains(char) }
+    .let { rowNumber -> rowNumber to this[rowNumber].indexOf(char) }
