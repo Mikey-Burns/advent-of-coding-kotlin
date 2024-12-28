@@ -4,7 +4,7 @@ import println
 import readInput
 
 fun main() {
-    fun part1(input: List<String>): Long = input.partOne().toLong()
+    fun part1(input: List<String>): Long = input.sumOf { code -> code.complexity(3) }
 
     fun part2(input: List<String>): Long = 0L
 
@@ -19,238 +19,268 @@ fun main() {
     part2(input).println()
 }
 
-fun String.keypadToDirections(): String = buildString {
-    val zip = ("A" + this@keypadToDirections).zipWithNext()
-    zip.forEach {
-            (start, end) ->
 
-        when(start) {
-            '0' ->
-                when(end) {
-                    '0' -> Unit
-                    '1' -> append("^<")
-                    '2' -> append("^")
-                    '3' -> append("^>")
-                    '4' -> append("^^<")
-                    '5' -> append("^^")
-                    '6' -> append("^^>")
-                    '7' -> append("^^^<")
-                    '8' -> append("^^^")
-                    '9' -> append("^^^>")
-                    'A' -> append(">")
-                }
+fun String.mapDirections(): List<String> = ("A" + this@mapDirections).zipWithNext()
+    .map { (start, end) ->
+        when (start) {
+            'A' -> when (end) {
+                'A' -> listOf("")
+                '^' -> listOf("<")
+                '<' -> listOf("v<<", "<v<")
+                'v' -> listOf("v<", "<v")
+                '>' -> listOf("v")
+                else -> error("Invalid character")
+            }
 
-            '1' ->
-                when(end) {
-                    '0' -> append(">v")
-                    '1' -> Unit
-                    '2' -> append(">")
-                    '3' -> append(">>")
-                    '4' -> append("^")
-                    '5' -> append("^>")
-                    '6' -> append("^>>")
-                    '7' -> append("^^")
-                    '8' -> append("^^>")
-                    '9' -> append("^^>>")
-                    'A' -> append(">>v")
-                }
+            '^' -> when (end) {
+                'A' -> listOf(">")
+                '^' -> listOf("")
+                '<' -> listOf("v<", "<v")
+                'v' -> listOf("v")
+                '>' -> listOf("v>", ">v")
+                else -> error("Invalid character")
+            }
 
-            '2' ->
-                when(end) {
-                    '0' -> append("v")
-                    '1' -> append("<")
-                    '2' -> Unit
-                    '3' -> append(">")
-                    '4' -> append("<^")
-                    '5' -> append("^")
-                    '6' -> append(">^")
-                    '7' -> append("<^^")
-                    '8' -> append("^^")
-                    '9' -> append(">^^")
-                    'A' -> append(">v")
-                }
+            '<' -> when (end) {
+                'A' -> listOf(">>^", ">^>")
+                '^' -> listOf(">^")
+                '<' -> listOf("")
+                'v' -> listOf(">")
+                '>' -> listOf(">>")
+                else -> error("Invalid character")
+            }
 
-            '3' ->
-                when(end) {
-                    '0' -> append("v<")
-                    '1' -> append("<<")
-                    '2' -> append("<")
-                    '3' -> Unit
-                    '4' -> append("^<<")
-                    '5' -> append("^<")
-                    '6' -> append("^")
-                    '7' -> append("<<^^")
-                    '8' -> append("^^<")
-                    '9' -> append("^^")
-                    'A' -> append("v")
-                }
+            'v' -> when (end) {
+                'A' -> listOf(">^", "^>")
+                '^' -> listOf("^")
+                '<' -> listOf("<")
+                'v' -> listOf("")
+                '>' -> listOf(">")
+                else -> error("Invalid character")
+            }
 
-            '4' ->
-                when(end) {
-                    '0' -> append("vv>")
-                    '1' -> append("v")
-                    '2' -> append("v>")
-                    '3' -> append(">>v")
-                    '4' -> Unit
-                    '5' -> append(">")
-                    '6' -> append(">>")
-                    '7' -> append("^")
-                    '8' -> append("^>")
-                    '9' -> append("^>>")
-                    'A' -> append(">>vv")
-                }
+            '>' -> when (end) {
+                'A' -> listOf("^")
+                '^' -> listOf("<^", "^<")
+                '<' -> listOf("<<")
+                'v' -> listOf("<")
+                '>' -> listOf("")
+                else -> error("Invalid character")
+            }
 
-            '5' ->
-                when(end) {
-                    '0' -> append("vv")
-                    '1' -> append("v<")
-                    '2' -> append("v")
-                    '3' -> append("v>")
-                    '4' -> append("<")
-                    '5' -> Unit
-                    '6' -> append(">")
-                    '7' -> append("^<")
-                    '8' -> append("^")
-                    '9' -> append("^>")
-                    'A' -> append(">vv")
-                }
-
-            '6' ->
-                when(end) {
-                    '0' -> append("vv<")
-                    '1' -> append("v<<")
-                    '2' -> append("<v")
-                    '3' -> append("v")
-                    '4' -> append("<<")
-                    '5' -> append("<")
-                    '6' -> Unit
-                    '7' -> append("^<<")
-                    '8' -> append("^<")
-                    '9' -> append("^")
-                    'A' -> append("vv")
-                }
-
-            '7' ->
-                when(end) {
-                    '0' -> append(">vvv")
-                    '1' -> append("vv")
-                    '2' -> append(">vv")
-                    '3' -> append(">>vv")
-                    '4' -> append("v")
-                    '5' -> append(">v")
-                    '6' -> append(">>v")
-                    '7' -> Unit
-                    '8' -> append(">")
-                    '9' -> append(">>")
-                    'A' -> append(">>vvv")
-                }
-
-            '8' ->
-                when(end) {
-                    '0' -> append("vvv")
-                    '1' -> append("<vv")
-                    '2' -> append("vv")
-                    '3' -> append(">vv")
-                    '4' -> append("<v")
-                    '5' -> append("v")
-                    '6' -> append(">v")
-                    '7' -> append("<")
-                    '8' -> Unit
-                    '9' -> append(">")
-                    'A' -> append(">vvv")
-                }
-
-            '9' ->
-                when(end) {
-                    '0' -> append("<vvv")
-                    '1' -> append("<<vv")
-                    '2' -> append("<vv")
-                    '3' -> append("vv")
-                    '4' -> append("<<v")
-                    '5' -> append("<v")
-                    '6' -> append("v")
-                    '7' -> append("<<")
-                    '8' -> append("<")
-                    '9' -> Unit
-                    'A' -> append("vvv")
-                }
-
-            'A' ->
-                when(end) {
-                    '0' -> append("<")
-                    '1' -> append("^<<")
-                    '2' -> append("^<")
-                    '3' -> append("^")
-                    '4' -> append("^^<<")
-                    '5' -> append("^^<")
-                    '6' -> append("^^")
-                    '7' -> append("^^^<<")
-                    '8' -> append("^^^<")
-                    '9' -> append("^^^")
-                    'A' -> Unit
-                }
+            else -> error("Invalid character")
         }
-        append("A")
+            .map { directions -> directions + "A" }
     }
-}
+    .fold(listOf("")) { accumulatedStrings, possibilitiesForThisTurn ->
+        possibilitiesForThisTurn.flatMap { thisTurn -> accumulatedStrings.map { possiblePath -> possiblePath + thisTurn } }
+    }
 
-fun String.directionsToDirections() = buildString {
-    ("A" + this@directionsToDirections).zipWithNext().forEach{
-            (start, end) -> when(start) {
-        'A' -> when(end) {
-            'A' -> Unit
-            '^' -> append("<")
-            '<' -> append("v<<")
-            'v' -> append("v<")
-            '>' -> append("v")
+fun String.mapKeypad(): List<String> = ("A" + this@mapKeypad).zipWithNext()
+    .map { (start, end) ->
+        when (start) {
+            '0' -> when (end) {
+                '0' -> listOf("")
+                '1' -> listOf("^<")
+                '2' -> listOf("^")
+                '3' -> listOf("^>", ">^")
+                '4' -> listOf("^^<", "^<^")
+                '5' -> listOf("^^")
+                '6' -> listOf("^^>", "^>^", ">^^")
+                '7' -> listOf("^^^<", "^^<^", "^<^^")
+                '8' -> listOf("^^^")
+                '9' -> listOf("^^^>", "^^>^", "^>^^", ">^^^")
+                'A' -> listOf(">")
+                else -> error("Invalid character")
+            }
+
+            '1' -> when (end) {
+                '0' -> listOf(">v")
+                '1' -> listOf("")
+                '2' -> listOf(">")
+                '3' -> listOf(">>")
+                '4' -> listOf("^")
+                '5' -> listOf("^>", ">^")
+                '6' -> listOf("^>>", ">^>", ">>^")
+                '7' -> listOf("^^")
+                '8' -> listOf("^^>", "^>^", ">^^")
+                '9' -> listOf("^^>>", "^>^>", "^>>^", ">>^^")
+                'A' -> listOf(">>v", ">v>")
+                else -> error("Invalid character")
+            }
+
+            '2' -> when (end) {
+                '0' -> listOf("v")
+                '1' -> listOf("<")
+                '2' -> listOf("")
+                '3' -> listOf(">")
+                '4' -> listOf("<^", "^<")
+                '5' -> listOf("^")
+                '6' -> listOf(">^", "^>")
+                '7' -> listOf("<^^", "^<^", "^^<")
+                '8' -> listOf("^^")
+                '9' -> listOf(">^^", "^>^", "^^>")
+                'A' -> listOf(">v", "v>")
+                else -> error("Invalid character")
+            }
+
+            '3' -> when (end) {
+                '0' -> listOf("v<", "<v")
+                '1' -> listOf("<<")
+                '2' -> listOf("<")
+                '3' -> listOf("")
+                '4' -> listOf("^<<", "<^<", "<<^")
+                '5' -> listOf("^<", "<^")
+                '6' -> listOf("^")
+                '7' -> listOf("<<^^", "<^<^", "<^^<", "^^<<", "^<^<", "^<<^")
+                '8' -> listOf("^^<", "^<^", "<^^")
+                '9' -> listOf("^^")
+                'A' -> listOf("v")
+                else -> error("Invalid character")
+            }
+
+            '4' -> when (end) {
+                '0' -> listOf("vv>", "v>v")
+                '1' -> listOf("v")
+                '2' -> listOf("v>")
+                '3' -> listOf(">>v", ">v>", "v>>")
+                '4' -> listOf("")
+                '5' -> listOf(">")
+                '6' -> listOf(">>")
+                '7' -> listOf("^")
+                '8' -> listOf("^>", ">^")
+                '9' -> listOf("^>>", ">^>", ">>^")
+                'A' -> listOf(">>vv", ">v>v", ">vv>")
+                else -> error("Invalid character")
+            }
+
+            '5' -> when (end) {
+                '0' -> listOf("vv")
+                '1' -> listOf("v<", "<v")
+                '2' -> listOf("v")
+                '3' -> listOf("v>")
+                '4' -> listOf("<")
+                '5' -> listOf("")
+                '6' -> listOf(">")
+                '7' -> listOf("^<", "<^")
+                '8' -> listOf("^")
+                '9' -> listOf("^>")
+                'A' -> listOf(">vv", "v>v", "vv>")
+                else -> error("Invalid character")
+            }
+
+            '6' -> when (end) {
+                '0' -> listOf("vv<", "v<v", "<vv")
+                '1' -> listOf("v<<", "<v<", "<<v")
+                '2' -> listOf("<v", "v<")
+                '3' -> listOf("v")
+                '4' -> listOf("<<")
+                '5' -> listOf("<")
+                '6' -> listOf("")
+                '7' -> listOf("^<<", "<^<", "<<^")
+                '8' -> listOf("^<", "<^")
+                '9' -> listOf("^")
+                'A' -> listOf("vv")
+                else -> error("Invalid character")
+            }
+
+            '7' -> when (end) {
+                '0' -> listOf(">vvv", "v>vv", "vv>v")
+                '1' -> listOf("vv")
+                '2' -> listOf(">vv", "v>v", "vv>")
+                '3' -> listOf(">>vv", ">v>v", ">vv>", "vv>>", "v>>v", "v>v>")
+                '4' -> listOf("v")
+                '5' -> listOf(">v", "v>")
+                '6' -> listOf(">>v", ">v>", "v>>")
+                '7' -> listOf("")
+                '8' -> listOf(">")
+                '9' -> listOf(">>")
+                'A' -> listOf(
+                    ">>vvv",
+                    ">v>vv", ">vv>v", ">vvv>",
+                    "v>vv>", "v>>vv", "v>v>v",
+                    "vv>>v", "vv>v>"
+                )
+
+                else -> error("Invalid character")
+            }
+
+            '8' -> when (end) {
+                '0' -> listOf("vvv")
+                '1' -> listOf("<vv", "v<v", "vv<")
+                '2' -> listOf("vv")
+                '3' -> listOf(">vv", ">v>", "vv>")
+                '4' -> listOf("<v", "v<")
+                '5' -> listOf("v")
+                '6' -> listOf(">v", "v>")
+                '7' -> listOf("<")
+                '8' -> listOf("")
+                '9' -> listOf(">")
+                'A' -> listOf(">vvv", "v>vv", "vv>v", "vvv>")
+                else -> error("Invalid character")
+            }
+
+            '9' -> when (end) {
+                '0' -> listOf("<vvv", "v<vv", "vv<v", "vvv<")
+                '1' -> listOf("<<vv", "<v<v", "<vv<", "v<v<", "v<<v", "vv<<")
+                '2' -> listOf("<vv", "v<v", "vv<")
+                '3' -> listOf("vv")
+                '4' -> listOf("<<v", "<v<", "v<<")
+                '5' -> listOf("<v", "v<")
+                '6' -> listOf("v")
+                '7' -> listOf("<<")
+                '8' -> listOf("<")
+                '9' -> listOf("")
+                'A' -> listOf("vvv")
+                else -> error("Invalid character")
+            }
+
+            'A' -> when (end) {
+                '0' -> listOf("<")
+                '1' -> listOf("^<<", "<^<")
+                '2' -> listOf("^<", "<^")
+                '3' -> listOf("^")
+                '4' -> listOf("^^<<", "^<^<", "^<<^", "<^<^")
+                '5' -> listOf("^^<", "^<^", "<^^")
+                '6' -> listOf("^^")
+                '7' -> listOf(
+                    "<<^^^",
+                    "<^<^^", "<^^<^", "<^^^<",
+                    "^<^^<", "^<<^^", "^<^<^",
+                    "^^<<^", "^^<^<"
+                )
+
+                '8' -> listOf("<^^^", "^<^^", "^^<^", "^^^<")
+                '9' -> listOf("^^^")
+                'A' -> listOf("")
+                else -> error("Invalid character")
+            }
+
+            else -> error("Invalid character")
         }
-        '^' -> when(end) {
-            'A' -> append(">")
-            '^' -> Unit
-            '<' -> append("v<")
-            'v' -> append("v")
-            '>' -> append("v>")
-        }
-        '<' -> when(end) {
-            'A' -> append(">>^")
-            '^' -> append(">^")
-            '<' -> Unit
-            'v' -> append(">")
-            '>' -> append(">>")
-        }
-        'v' -> when(end) {
-            'A' -> append(">^")
-            '^' -> append("^")
-            '<' -> append("<")
-            'v' -> Unit
-            '>' -> append(">")
-        }
-        '>' -> when(end) {
-            'A' -> append("^")
-            '^' -> append("<^")
-            '<' -> append("<<")
-            'v' -> append("<")
-            '>' -> Unit
+            // Each direction ends with 'A'
+            .map { directions -> directions + "A" }
+
+    }
+    .fold(listOf("")) { accumulatedStrings, possibilitiesForThisTurn ->
+        possibilitiesForThisTurn.flatMap { thisTurn -> accumulatedStrings.map { possiblePath -> possiblePath + thisTurn } }
+    }
+
+fun String.complexity(directionRobots: Int): Long {
+    val cache: MutableMap<Pair<String, Int>, String> = mutableMapOf()
+
+    fun String.findShortestAtDepth(depth: Int): String {
+        return cache.getOrPut(this to depth) {
+            if (depth == 0) {
+                return this
+            } else {
+                return this.mapDirections().map { it.findShortestAtDepth(depth - 1) }.minBy { it.length }
+            }
         }
     }
-        append("A")
-    }
-}
 
-fun List<String>.partOne() : Int {
-    return this.sumBy{ line ->
-        //println(line)
-        val numeric = line.dropLast(1).toInt()
-        var directions = line.keypadToDirections()
-        repeat (2) {
-            //println(directions)
-            directions = directions.directionsToDirections()
-        }
-        //println(directions)
-        //println("${directions.length} * $numeric = ${numeric * directions.length}")
-
-        (numeric * directions.length)
-        //.also(::println)
-
-    }
+    val shortestSequence = this.mapKeypad()
+        .map { it.findShortestAtDepth(directionRobots - 1) }
+        .minBy { it.length }
+    return this.dropLast(1).toLong() * shortestSequence.length
 }
