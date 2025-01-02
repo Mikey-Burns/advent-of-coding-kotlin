@@ -8,13 +8,17 @@ fun main() {
         .findGroupsOfThree()
         .count { it.startsWithT() }
 
-    fun part2(input: List<String>): Long = 0L
+    fun part2(input: List<String>): String = input.toDatalinkMap()
+        .findAllGroups()
+        .maxBy { it.size }
+        .sorted()
+        .joinToString(",")
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day23_test", "2024")
     check(part1(testInput) == 7)
     val testInput2 = readInput("Day23_test", "2024")
-    check(part2(testInput2) == 0L)
+    check(part2(testInput2) == "co,de,ka,ta")
 
     val input = readInput("Day23", "2024")
     part1(input).println()
@@ -42,6 +46,21 @@ private fun Map<String, List<String>>.findGroupsOfThree(): List<Triple<String, S
     }
         .distinct()
         .sortedBy { it.first }
+
+private fun Map<String, List<String>>.findAllGroups(): List<List<String>> =
+    entries.flatMap { (name, connections) ->
+        connections.map { connection ->
+            val network = mutableListOf(name, connection)
+            getValue(connection)
+                .forEach { thirdDegree ->
+                    if (network.all { getValue(it).contains(thirdDegree) }) {
+                        network.add(thirdDegree)
+                    }
+                }
+            network.sorted()
+        }
+    }
+        .distinct()
 
 private fun List<String>.toTriple(): Triple<String, String, String> = Triple(this[0], this[1], this[2])
 
