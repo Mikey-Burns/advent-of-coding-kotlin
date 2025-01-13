@@ -4,9 +4,14 @@ import println
 import readInput
 
 fun main() {
-    fun part1(input: List<String>): Long = input.map { Ingredient.of(it) }.findMaxScoreWithoutCalories()
+    fun part1(input: List<String>): Long = input.map { Ingredient.of(it) }
+        .findMaxScore { list -> list.sumOf { (_, quantity) -> quantity } == 100 }
 
-    fun part2(input: List<String>): Long = input.map { Ingredient.of(it) }.findMaxScoreWithCalories(500)
+    fun part2(input: List<String>): Long = input.map { Ingredient.of(it) }
+        .findMaxScore { list ->
+            list.sumOf { (_, quantity) -> quantity } == 100
+                    && list.sumOf { (ingredient, quantity) -> ingredient.calories * quantity } == 500
+        }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day15_test", "2015")
@@ -19,11 +24,10 @@ fun main() {
     part2(input).println()
 }
 
-private fun List<Ingredient>.findMaxScoreWithoutCalories(): Long {
+private fun List<Ingredient>.findMaxScore(filter: (List<Pair<Ingredient, Int>>) -> Boolean): Long {
     fun makeComboAndGetScore(quantities: List<Int>): Long {
         if (quantities.size == this.size) {
-            // Potential bug that we don't enforce the sum is 100
-            return this.zip(quantities).scoreWithoutCalories()
+            return this.zip(quantities).filter(filter).score()
         }
         return (0..(100 - quantities.sum()))
             .maxOf { quantity -> makeComboAndGetScore(quantities + quantity) }
@@ -32,20 +36,10 @@ private fun List<Ingredient>.findMaxScoreWithoutCalories(): Long {
     return makeComboAndGetScore(emptyList())
 }
 
-private fun List<Ingredient>.findMaxScoreWithCalories(targetCalories: Int): Long {
-    fun makeComboAndGetScore(quantities: List<Int>): Long {
-        if (quantities.size == this.size) {
-            // Potential bug that we don't enforce the sum is 100
-            return this.zip(quantities).filterCalories(targetCalories).scoreWithoutCalories()
-        }
-        return (0..(100 - quantities.sum()))
-            .maxOf { quantity -> makeComboAndGetScore(quantities + quantity) }
-    }
+private fun List<Pair<Ingredient, Int>>.filter(filter: (List<Pair<Ingredient, Int>>) -> Boolean): List<Pair<Ingredient, Int>> =
+    if (filter(this)) this else emptyList()
 
-    return makeComboAndGetScore(emptyList())
-}
-
-private fun List<Pair<Ingredient, Int>>.scoreWithoutCalories(): Long {
+private fun List<Pair<Ingredient, Int>>.score(): Long {
     val capacity = this.sumOf { (ingredient, quantity) -> ingredient.capacity * quantity }.coerceAtLeast(0).toLong()
     val durability = this.sumOf { (ingredient, quantity) -> ingredient.durability * quantity }.coerceAtLeast(0).toLong()
     val flavor = this.sumOf { (ingredient, quantity) -> ingredient.flavor * quantity }.coerceAtLeast(0).toLong()
@@ -53,9 +47,6 @@ private fun List<Pair<Ingredient, Int>>.scoreWithoutCalories(): Long {
 
     return capacity * durability * flavor * texture
 }
-
-private fun List<Pair<Ingredient, Int>>.filterCalories(targetCalories: Int): List<Pair<Ingredient, Int>> =
-    if (this.sumOf { (ingredient, quantity) -> ingredient.calories * quantity } == targetCalories) this else emptyList()
 
 private data class Ingredient(
     val name: String,
