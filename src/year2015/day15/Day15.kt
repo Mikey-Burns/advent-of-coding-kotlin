@@ -55,7 +55,7 @@ private fun List<Pair<Ingredient, Int>>.scoreWithoutCalories(): Long {
 }
 
 private fun List<Pair<Ingredient, Int>>.filterCalories(targetCalories: Int): List<Pair<Ingredient, Int>> =
-    if (this.sumOf { (ingredient, quantity) -> ingredient.calories * quantity } == 500) this else emptyList()
+    if (this.sumOf { (ingredient, quantity) -> ingredient.calories * quantity } == targetCalories) this else emptyList()
 
 private data class Ingredient(
     val name: String,
