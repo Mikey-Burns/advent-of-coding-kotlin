@@ -14,11 +14,11 @@ dependencies {
 tasks {
     sourceSets {
         main {
-            java.srcDirs("src")
+            java.srcDirs("src/main/kotlin")
         }
     }
 
     wrapper {
-        gradleVersion = "8.4"
+        gradleVersion = "8.10"
     }
 }
