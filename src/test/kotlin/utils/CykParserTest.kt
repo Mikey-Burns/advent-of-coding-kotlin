@@ -136,4 +136,47 @@ class CykParserTest {
         assertFalse(grammar.isStringInGrammar("c"))
     }
     // endregion
+
+    // region Elemental CYK, complicatedKeys
+    @Test
+    fun complexElementalGrammarHandlesLetters() {
+        val rules = listOf(
+            ElementalRule(NonTerminal("S"), Terminal("Zb"))
+        )
+        val grammar = ElementalCykParser("S", rules, "[A-Z][a-z]?")
+        assertTrue(grammar.isStringInComplexGrammar("Zb"))
+        assertFalse(grammar.isStringInComplexGrammar("A"))
+        assertFalse(grammar.isStringInComplexGrammar("B"))
+        assertFalse(grammar.isStringInComplexGrammar("BA"))
+        assertFalse(grammar.isStringInComplexGrammar("Z"))
+        assertFalse(grammar.isStringInComplexGrammar("a"))
+        assertFalse(grammar.isStringInComplexGrammar("z"))
+    }
+
+    @Test
+    fun complexElementalGrammarWithMultipleRules() {
+        val rules = listOf(
+            ElementalRule(
+                NonTerminal("S"),
+                listOf(NonTerminal("A"), NonTerminal("Bs"))
+            ),
+            ElementalRule(
+                NonTerminal("A"),
+                Terminal("Cd")
+            ),
+            ElementalRule(
+                NonTerminal("Bs"),
+                Terminal("Zz")
+            )
+        )
+        val grammar = ElementalCykParser("S", rules, "[A-Z][a-z]?")
+        assertTrue(grammar.isStringInComplexGrammar("CdZz"))
+        assertFalse(grammar.isStringInComplexGrammar("CdBs"))
+        assertFalse(grammar.isStringInComplexGrammar("B"))
+        assertFalse(grammar.isStringInComplexGrammar("BA"))
+        assertFalse(grammar.isStringInComplexGrammar("Z"))
+        assertFalse(grammar.isStringInComplexGrammar("a"))
+        assertFalse(grammar.isStringInComplexGrammar("z"))
+    }
+    // endregion
 }
