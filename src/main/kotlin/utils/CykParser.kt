@@ -1,16 +1,38 @@
 package utils
 
-class CykParser(private val start: Char, rules: List<CykRule>) {
-    private val nonTerminalRules = rules.filter { rule -> rule.right.length == 2 }
-    private val terminalRules = rules.filter { rule -> rule.right.length == 1 }
+import utils.Element.NonTerminal
+import utils.Element.Terminal
+
+class CykParser(start: Char, rules: List<CykRule>) {
+    private val nonTerminalKeys = rules.map { rule -> rule.left.toString() }.toSet()
+    private val elementalRules = rules.map { rule ->
+        val left = NonTerminal(rule.left.toString())
+        val right = rule.right
+            .map { it.toString() }
+            .map { c ->
+            if (c in nonTerminalKeys) NonTerminal(c) else Terminal(c)
+        }
+        ElementalRule(left, right)
+    }
+
+    private val elementalParser = ElementalCykParser(start.toString(), elementalRules)
+
+    fun isStringInGrammar(input: String): Boolean = elementalParser.isStringInGrammar(input)
+}
+
+data class CykRule(val left: Char, val right: String)
+
+class ElementalCykParser(private val start: String, rules: List<ElementalRule>) {
+    private val nonTerminalRules = rules.filter { rule -> rule.right.size == 2 }
+    private val terminalRules = rules.filter { rule -> rule.right.size == 1 && rule.right[0] is Terminal }
 
     fun isStringInGrammar(input: String): Boolean {
-        val dp = Array(input.length) { Array<MutableSet<Char>>(input.length) { mutableSetOf() } }
+        val dp = Array(input.length) { Array<MutableSet<String>>(input.length) { mutableSetOf() } }
         // Base case
         for (i in input.indices) {
             for (rule in terminalRules) {
-                if (rule.right[0] == input[i]) {
-                    dp[i][i].add(rule.left)
+                if (rule.right[0].text == input[i].toString()) {
+                    dp[i][i].add(rule.left.text)
                 }
             }
         }
@@ -20,8 +42,8 @@ class CykParser(private val start: Char, rules: List<CykRule>) {
                 val j = i + (length - 1)
                 for (k in i..<j) {
                     for (rule in nonTerminalRules) {
-                        if (dp[i][k].contains(rule.right[0]) && dp[k + 1][j].contains(rule.right[1])) {
-                            dp[i][j].add(rule.left)
+                        if (dp[i][k].contains(rule.right[0].text) && dp[k + 1][j].contains(rule.right[1].text)) {
+                            dp[i][j].add(rule.left.text)
                         }
                     }
                 }
@@ -32,4 +54,12 @@ class CykParser(private val start: Char, rules: List<CykRule>) {
     }
 }
 
-data class CykRule(val left: Char, val right: String)
+sealed class Element(open val text: String) {
+
+    data class NonTerminal(override val text: String) : Element(text)
+    data class Terminal(override val text: String) : Element(text)
+}
+
+data class ElementalRule(val left: NonTerminal, val right: List<Element>) {
+    constructor(left: NonTerminal, vararg right: Element) : this(left, right.toList())
+}
