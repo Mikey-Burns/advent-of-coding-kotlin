@@ -171,7 +171,7 @@ class CykParserTest {
         )
         val grammar = ElementalCykParser("S", rules, "[A-Z][a-z]?")
         assertTrue(grammar.isStringInComplexGrammar("CdZz"))
-        assertFalse(grammar.isStringInComplexGrammar("CdBs"))
+        assertTrue(grammar.isStringInComplexGrammar("CdBs"))
         assertFalse(grammar.isStringInComplexGrammar("B"))
         assertFalse(grammar.isStringInComplexGrammar("BA"))
         assertFalse(grammar.isStringInComplexGrammar("Z"))

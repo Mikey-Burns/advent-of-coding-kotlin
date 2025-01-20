@@ -22,7 +22,7 @@ class CykParser(start: Char, rules: List<CykRule>) {
 
 data class CykRule(val left: Char, val right: String)
 
-class ElementalCykParser(private val start: String, rules: List<ElementalRule>, private val nonTerminalRegex: String = "[A-Z]") {
+class ElementalCykParser(private val start: String, val rules: List<ElementalRule>, private val nonTerminalRegex: String = "[A-Z]") {
     private val nonTerminalRules = rules.filter { rule -> rule.right.size == 2 }
     private val terminalRules = rules.filter { rule -> rule.right.size == 1 && rule.right[0] is Terminal }
     private val nonTerminalKeys = nonTerminalRules.map { rule -> rule.left.text }.toSet()
@@ -76,6 +76,11 @@ class ElementalCykParser(private val start: String, rules: List<ElementalRule>, 
             for (rule in terminalRules) {
                 if (rule.right[0].text == inputMatches[i].text) {
                     dp[i][i].add(rule.left.text)
+                }
+            }
+            for (rule in nonTerminalRules) {
+                if (rule.right.any { it.text == inputMatches[i].text }) {
+                    dp[i][i].add(inputMatches[i].text)
                 }
             }
         }
