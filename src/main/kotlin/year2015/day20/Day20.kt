@@ -2,6 +2,7 @@ package year2015.day20
 
 import utils.println
 import utils.readInput
+import kotlin.time.measureTime
 
 
 fun main() {
@@ -14,18 +15,28 @@ fun main() {
     check(findElfHouse(300) == 16)
 
     val input = readInput("Day20", "2015")
-    part1(input).println()
-    part2(input).println()
+    measureTime { part1(input).println() }.println()
+    measureTime { part2(input).println() }.println()
 }
 
-private fun findElfHouse(presentThreshold: Long): Int = generateSequence(0) { it + 1}
-    .map { house ->
-        ((1..(house / 2)).filter { house % it == 0 }.sum() + house) * 10
+private fun findElfHouse(presentThreshold: Long): Int {
+    val maxHouse = (presentThreshold / 10).toInt()
+    val houses = MutableList(maxHouse) { 0 }
+    for (elf in 1..<maxHouse) {
+        for (house in elf..<maxHouse step elf) {
+            houses[house] += elf * 10
+        }
     }
-    .indexOfFirst { it >= presentThreshold }
+    return houses.indexOfFirst { it >= presentThreshold }
+}
 
-private fun findElfHouseLimited(presentThreshold: Long): Int = generateSequence(0) { it + 1}
-    .map { house ->
-        ((1..(house / 2)).filter { house % it == 0 && house <= it * 50 }.sum() + house) * 11
+private fun findElfHouseLimited(presentThreshold: Long): Int {
+    val maxHouse = (presentThreshold / 11).toInt()
+    val houses = MutableList(maxHouse) { 0 }
+    for (elf in 1..<maxHouse) {
+        for (house in elf..maxHouse.coerceAtMost(elf * 50) step elf) {
+            houses[house] += elf * 11
+        }
     }
-    .indexOfFirst { it >= presentThreshold }
+    return houses.indexOfFirst { it >= presentThreshold }
+}
