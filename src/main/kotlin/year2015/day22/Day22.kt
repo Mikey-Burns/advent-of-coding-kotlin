@@ -151,3 +151,159 @@ private enum class Spell(val mana: Int) {
     POISON(173),
     RECHARGE(229)
 }
+
+@Suppress("unused")
+private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int = 0): Int {
+    var minimumManaSpent = Int.MAX_VALUE
+    var minimumSpellSet = emptyList<Spell>()
+
+    fun playerTurn(battleState: BattleState) {
+        fun enemyTurn(enemyBattleState: BattleState) {
+            // Status effects
+            with(enemyBattleState) {
+                val currentMana = manaRemaining + (if (rechargeTurns > 0) 101 else 0)
+                val effectiveEnemyHp = enemyHp - (if (poisonTurns > 0) 3 else 0)
+                // Check for poison kill
+                if (effectiveEnemyHp <= 0) {
+                    if (spellsCast.manaCost() < minimumManaSpent) {
+                        minimumManaSpent = spellsCast.manaCost()
+                        minimumSpellSet = spellsCast
+                        return
+                    }
+                }
+                // Hit the player
+                val damageDealt = (enemy.damage - (if (shieldTurns > 0) 7 else 0)).coerceAtLeast(1)
+                return playerTurn(
+                    BattleState(
+                        wizardHp - damageDealt,
+                        effectiveEnemyHp,
+                        currentMana,
+                        shieldTurns.decrementToZero(),
+                        poisonTurns.decrementToZero(),
+                        rechargeTurns.decrementToZero(),
+                        spellsCast
+                    )
+                )
+            }
+        }
+
+        with(battleState) {
+            // Difficulty Damage
+            val effectiveHp = wizardHp - difficultyDamage
+            if (effectiveHp <= 0) return
+            // Status effects
+            val currentMana = manaRemaining + (if (rechargeTurns > 0) 101 else 0)
+            val effectiveEnemyHp = enemyHp - (if (poisonTurns > 0) 3 else 0)
+            // Check for poison kill
+            if (effectiveEnemyHp <= 0) {
+                if (spellsCast.manaCost() < minimumManaSpent) {
+                    minimumManaSpent = spellsCast.manaCost()
+                    minimumSpellSet = spellsCast
+                    return
+                }
+            }
+            // Cast spell
+            spells.filter { spellsCast.manaCost() < 2000 }
+                .filter { spell -> spell.mana <= currentMana }
+                .filter { spell ->
+                    when (spell) {
+                        SHIELD -> shieldTurns.decrementToZero() == 0
+                        POISON -> poisonTurns.decrementToZero() == 0
+                        RECHARGE -> rechargeTurns.decrementToZero() == 0
+                        else -> true
+                    }
+                }
+                .forEach { spell ->
+                    val updatedMana = currentMana - spell.mana
+                    val updatedSpells = spellsCast + spell
+                    when (spell) {
+                        MAGIC_MISSILE -> enemyTurn(
+                            BattleState(
+                                effectiveHp,
+                                effectiveEnemyHp - 4,
+                                updatedMana,
+                                shieldTurns.decrementToZero(),
+                                poisonTurns.decrementToZero(),
+                                rechargeTurns.decrementToZero(),
+                                updatedSpells
+                            )
+                        )
+
+                        DRAIN -> enemyTurn(
+                            BattleState(
+                                effectiveHp + 2,
+                                effectiveEnemyHp - 2,
+                                updatedMana,
+                                shieldTurns.decrementToZero(),
+                                poisonTurns.decrementToZero(),
+                                rechargeTurns.decrementToZero(),
+                                updatedSpells
+                            )
+                        )
+
+                        SHIELD -> enemyTurn(
+                            BattleState(
+                                effectiveHp,
+                                effectiveEnemyHp,
+                                updatedMana,
+                                6,
+                                poisonTurns.decrementToZero(),
+                                rechargeTurns.decrementToZero(),
+                                updatedSpells
+                            )
+                        )
+
+                        POISON -> enemyTurn(
+                            BattleState(
+                                effectiveHp,
+                                effectiveEnemyHp,
+                                updatedMana,
+                                shieldTurns.decrementToZero(),
+                                6,
+                                rechargeTurns.decrementToZero(),
+                                updatedSpells
+                            )
+                        )
+
+                        RECHARGE -> enemyTurn(
+                            BattleState(
+                                effectiveHp,
+                                effectiveEnemyHp,
+                                updatedMana,
+                                shieldTurns.decrementToZero(),
+                                poisonTurns.decrementToZero(),
+                                5,
+                                updatedSpells
+                            )
+                        )
+                    }
+                }
+        }
+    }
+
+    playerTurn(
+        BattleState(
+            wizard.hitPoints,
+            enemy.hitPoints,
+            wizard.mana,
+            0,
+            0,
+            0,
+            emptyList()
+        )
+    )
+    println(minimumSpellSet)
+    return minimumManaSpent
+}
+
+private data class BattleState(
+    val wizardHp: Int,
+    val enemyHp: Int,
+    val manaRemaining: Int,
+    val shieldTurns: Int,
+    val poisonTurns: Int,
+    val rechargeTurns: Int,
+    val spellsCast: List<Spell>
+)
+
+private fun Int.decrementToZero(): Int = (this - 1).coerceAtLeast(0)
