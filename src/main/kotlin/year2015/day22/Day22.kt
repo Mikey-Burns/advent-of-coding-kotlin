@@ -3,12 +3,13 @@ package year2015.day22
 import utils.println
 import utils.readInput
 import year2015.day22.Spell.*
+import java.util.*
 import kotlin.time.measureTime
 
 fun main() {
-    fun part1(input: List<String>): Int = leastManaBattle(Wizard(), input.toEnemy())
+    fun part1(input: List<String>): Int = prioritySearch(Wizard(), input.toEnemy())
 
-    fun part2(input: List<String>): Int = leastManaBattle(Wizard(), input.toEnemy(), 1)
+    fun part2(input: List<String>): Int = prioritySearch(Wizard(), input.toEnemy(), 1)
 
     val input = readInput("Day22", "2015")
     measureTime { part1(input).println() }.println()
@@ -25,6 +26,7 @@ private fun List<String>.toEnemy(): Enemy {
 
 private val spells = listOf(MAGIC_MISSILE, DRAIN, SHIELD, POISON, RECHARGE)
 
+@Suppress("Unused")
 private fun leastManaBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int = 0): Int {
     var minimumManaSpent = Int.MAX_VALUE
     var minimumSpellSet = emptyList<Spell>()
@@ -178,6 +180,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
                         wizardHp - damageDealt,
                         effectiveEnemyHp,
                         currentMana,
+                        manaSpent,
                         shieldTurns.decrementToZero(),
                         poisonTurns.decrementToZero(),
                         rechargeTurns.decrementToZero(),
@@ -215,6 +218,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
                 }
                 .forEach { spell ->
                     val updatedMana = currentMana - spell.mana
+                    val updatedManaSpent = manaSpent + spell.mana
                     val updatedSpells = spellsCast + spell
                     when (spell) {
                         MAGIC_MISSILE -> enemyTurn(
@@ -222,6 +226,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
                                 effectiveHp,
                                 effectiveEnemyHp - 4,
                                 updatedMana,
+                                updatedManaSpent,
                                 shieldTurns.decrementToZero(),
                                 poisonTurns.decrementToZero(),
                                 rechargeTurns.decrementToZero(),
@@ -234,6 +239,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
                                 effectiveHp + 2,
                                 effectiveEnemyHp - 2,
                                 updatedMana,
+                                updatedManaSpent,
                                 shieldTurns.decrementToZero(),
                                 poisonTurns.decrementToZero(),
                                 rechargeTurns.decrementToZero(),
@@ -246,6 +252,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
                                 effectiveHp,
                                 effectiveEnemyHp,
                                 updatedMana,
+                                updatedManaSpent,
                                 6,
                                 poisonTurns.decrementToZero(),
                                 rechargeTurns.decrementToZero(),
@@ -258,6 +265,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
                                 effectiveHp,
                                 effectiveEnemyHp,
                                 updatedMana,
+                                updatedManaSpent,
                                 shieldTurns.decrementToZero(),
                                 6,
                                 rechargeTurns.decrementToZero(),
@@ -270,6 +278,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
                                 effectiveHp,
                                 effectiveEnemyHp,
                                 updatedMana,
+                                updatedManaSpent,
                                 shieldTurns.decrementToZero(),
                                 poisonTurns.decrementToZero(),
                                 5,
@@ -289,6 +298,7 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
             0,
             0,
             0,
+            0,
             emptyList()
         )
     )
@@ -296,14 +306,127 @@ private fun turnBasedBattle(wizard: Wizard, enemy: Enemy, difficultyDamage: Int 
     return minimumManaSpent
 }
 
+private fun prioritySearch(wizard: Wizard, enemy: Enemy, difficultyDamage: Int = 0): Int {
+    val toExplore = PriorityQueue<BattleState>(compareBy<BattleState> { it.manaSpent })
+        .apply {
+            add(
+                BattleState(
+                    wizard.hitPoints,
+                    enemy.hitPoints,
+                    wizard.mana
+                )
+            )
+        }
+    while (toExplore.isNotEmpty()) {
+        // Player turn
+        val current = toExplore.poll()
+
+        // If we just struck a killing blow
+        val effectiveEnemyHp = current.enemyHp - (if (current.poisonTurns > 0) 3 else 0)
+        if (effectiveEnemyHp <= 0) {
+            println(current.spellsCast)
+            return current.manaSpent
+        }
+        // If we're actually dead
+        val effectiveHp = current.wizardHp - difficultyDamage
+        if (effectiveHp <= 0) continue
+        val manaGain = if (current.rechargeTurns.decrementToZero() > 0) 101 else 0
+        val effectiveMana = current.manaRemaining + manaGain
+
+        spells
+            .filter { spell -> spell.mana <= effectiveMana }
+            .filter { spell ->
+                when (spell) {
+                    // All effects can be cast every 3 turns, so if it isn't one of the two most recent
+                    // spells, then we're good
+                    SHIELD, POISON, RECHARGE -> spell !in current.spellsCast.takeLast(2)
+                    else -> true
+                }
+            }
+            .map { spell ->
+                // Helper to hide common attributes
+                fun next(
+                    wizardHp: Int = effectiveHp,
+                    enemyHp: Int = effectiveEnemyHp,
+                    manaRemaining: Int = effectiveMana - spell.mana,
+                    manaSpent: Int = current.manaSpent + spell.mana,
+                    shieldTurns: Int = current.shieldTurns.decrementToZero(),
+                    poisonTurns: Int = current.poisonTurns.decrementToZero(),
+                    rechargeTurns: Int = current.rechargeTurns.decrementToZero(),
+                    spellsCast: List<Spell> = current.spellsCast + spell
+                ): BattleState =
+                    BattleState(
+                        wizardHp,
+                        enemyHp,
+                        manaRemaining,
+                        manaSpent,
+                        shieldTurns,
+                        poisonTurns,
+                        rechargeTurns,
+                        spellsCast
+                    )
+
+                when (spell) {
+                    MAGIC_MISSILE -> next(
+                        enemyHp = effectiveEnemyHp - 4
+                    )
+
+                    DRAIN -> next(
+                        wizardHp = effectiveHp + 2,
+                        enemyHp = effectiveEnemyHp - 2
+                    )
+
+                    SHIELD -> next(
+                        shieldTurns = 6
+                    )
+
+                    POISON -> next(
+                        poisonTurns = 6
+                    )
+
+                    RECHARGE -> next(
+                        rechargeTurns = 6,
+                    )
+                }
+            }
+            .forEach { beforeBoss ->
+                // Boss turn
+                with(beforeBoss) {
+                    val armor = if (current.shieldTurns > 0) 7 else 0
+                    val damageTaken = (enemy.damage - armor).coerceAtLeast(1)
+                    val dot = if (poisonTurns > 0) 3 else 0
+                    val manaGain = if (rechargeTurns.decrementToZero() > 0) 101 else 0
+
+                    val afterBoss = copy(
+                        wizardHp = wizardHp - damageTaken,
+                        enemyHp = enemyHp - dot,
+                        manaRemaining = manaRemaining + manaGain,
+                        shieldTurns = shieldTurns.decrementToZero(),
+                        poisonTurns = poisonTurns.decrementToZero(),
+                        rechargeTurns = rechargeTurns.decrementToZero(),
+                    )
+                    // Check if the boss is dead
+                    if (afterBoss.enemyHp <= 0) {
+                        println(spellsCast)
+                        return manaSpent
+                    }
+                    // Continue if we aren't dead yet
+                    if (afterBoss.wizardHp > 0) toExplore.add(afterBoss)
+                }
+            }
+    }
+    error("The player never won!")
+}
+
 private data class BattleState(
     val wizardHp: Int,
     val enemyHp: Int,
     val manaRemaining: Int,
-    val shieldTurns: Int,
-    val poisonTurns: Int,
-    val rechargeTurns: Int,
-    val spellsCast: List<Spell>
+    val manaSpent: Int = 0,
+    val shieldTurns: Int = 0,
+    val poisonTurns: Int = 0,
+    val rechargeTurns: Int = 0,
+    val spellsCast: List<Spell> = emptyList()
 )
 
 private fun Int.decrementToZero(): Int = (this - 1).coerceAtLeast(0)
