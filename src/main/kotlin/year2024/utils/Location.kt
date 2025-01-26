@@ -1,6 +1,7 @@
 package year2024.utils
 
-import year2024.utils.Direction.*
+import utils.Direction
+import utils.Direction.*
 import kotlin.math.abs
 
 typealias Location = Pair<Int, Int>
@@ -26,10 +27,6 @@ fun Location.step(direction: Direction) = when (direction) {
     DOWN -> down()
     LEFT -> left()
     RIGHT -> right()
-}
-
-enum class Direction {
-    UP, DOWN, LEFT, RIGHT
 }
 
 fun List<String>.findLocationOfChar(char: Char): Location = this.indexOfFirst { line -> line.contains(char) }
