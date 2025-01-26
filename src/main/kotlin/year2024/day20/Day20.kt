@@ -1,8 +1,6 @@
 package year2024.day20
 
-import utils.println
-import utils.readInput
-import year2024.utils.*
+import utils.*
 import kotlin.math.min
 
 fun main() {

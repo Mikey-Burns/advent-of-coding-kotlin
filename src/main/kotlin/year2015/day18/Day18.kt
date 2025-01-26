@@ -1,9 +1,9 @@
 package year2015.day18
 
+import utils.Location
+import utils.allNeighbors
 import utils.println
 import utils.readInput
-import year2024.utils.Location
-import year2024.utils.allNeighbors
 
 fun main() {
     fun part1(input: List<String>, steps: Int = 100): Int = input.toLightGrid().animate(steps).litCount

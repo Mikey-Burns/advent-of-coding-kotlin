@@ -1,7 +1,5 @@
-package year2024.utils
+package utils
 
-import utils.Direction
-import utils.Direction.*
 import kotlin.math.abs
 
 typealias Location = Pair<Int, Int>
@@ -23,10 +21,10 @@ fun Location.allNeighbors(): List<Location> = listOf(
 )
 
 fun Location.step(direction: Direction) = when (direction) {
-    UP -> up()
-    DOWN -> down()
-    LEFT -> left()
-    RIGHT -> right()
+    Direction.UP -> up()
+    Direction.DOWN -> down()
+    Direction.LEFT -> left()
+    Direction.RIGHT -> right()
 }
 
 fun List<String>.findLocationOfChar(char: Char): Location = this.indexOfFirst { line -> line.contains(char) }

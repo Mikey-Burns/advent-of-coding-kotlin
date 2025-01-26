@@ -1,10 +1,7 @@
 package year2024.day16
 
-import utils.Direction
+import utils.*
 import utils.Direction.*
-import utils.println
-import utils.readInput
-import year2024.utils.*
 
 fun main() {
     fun part1(input: List<String>): Long = Maze(input).searchForExit()
