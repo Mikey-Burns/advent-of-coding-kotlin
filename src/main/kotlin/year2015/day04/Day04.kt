@@ -1,8 +1,8 @@
 package year2015.day04
 
+import utils.md5
 import utils.println
 import utils.readInput
-import java.security.MessageDigest
 
 fun main() {
     fun part1(input: List<String>): Long = input[0].findMd5WithLeadingZeros(5)
@@ -17,9 +17,6 @@ fun main() {
     part1(input).println()
     part2(input).println()
 }
-
-@OptIn(ExperimentalStdlibApi::class)
-private fun String.md5() = MessageDigest.getInstance("MD5").digest(this.toByteArray()).toHexString()
 
 private fun String.findMd5WithLeadingZeros(numZeros: Int):Long {
     val prefix = "0".repeat(numZeros)
