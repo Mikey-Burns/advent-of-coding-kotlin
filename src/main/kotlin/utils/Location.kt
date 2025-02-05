@@ -16,6 +16,10 @@ fun Location.upRight(): Location = first - 1 to second + 1
 fun Location.downLeft(): Location = first + 1 to second - 1
 fun Location.downRight(): Location = first + 1 to second + 1
 
+fun Location.cardinalNeighbors(): List<Location> = listOf(
+    up(), right(), down(), left()
+)
+
 fun Location.allNeighbors(): List<Location> = listOf(
     up(), upRight(), right(), downRight(), down(), downLeft(), left(), upLeft()
 )
