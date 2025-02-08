@@ -2,7 +2,6 @@ package year2016.day17
 
 import utils.*
 import java.util.*
-import kotlin.math.max
 import kotlin.time.measureTime
 
 fun main() {
@@ -23,39 +22,14 @@ fun main() {
     measureTime { part2(input).println() }.println()
 }
 
-private fun shortestPath(passcode: String): String {
+private fun shortestPath(passcode: String): String = findAllPaths(passcode).minBy(String::length)
+
+private fun longestPath(passcode: String): Int = findAllPaths(passcode).maxOf(String::length)
+
+private fun findAllPaths(passcode: String): List<String> {
     val exit = Location(3, 3)
     val openDoors = "bcdef"
-
-    val queue = PriorityQueue<Pair<Location, String>>(compareBy<Pair<Location, String>> { (_, steps) -> steps.length })
-        .apply { add(Location(0, 0) to "") }
-
-    while (queue.isNotEmpty()) {
-        val (location, steps) = queue.poll()
-
-        if (location == exit) return steps
-
-        val md5 = (passcode + steps).md5().take(4)
-        if (openDoors.contains(md5[0]) && location.first > 0) {
-            queue.add(location.up() to steps + "U")
-        }
-        if (openDoors.contains(md5[1]) && location.first < 3) {
-            queue.add(location.down() to steps + "D")
-        }
-        if (openDoors.contains(md5[2]) && location.second > 0) {
-            queue.add(location.left() to steps + "L")
-        }
-        if (openDoors.contains(md5[3]) && location.second < 3) {
-            queue.add(location.right() to steps + "R")
-        }
-    }
-    error("Never get out of this maze")
-}
-
-private fun longestPath(passcode: String): Int {
-    val exit = Location(3, 3)
-    val openDoors = "bcdef"
-    var maxSteps = Int.MIN_VALUE
+    val paths = mutableListOf<String>()
 
     val queue = PriorityQueue<Pair<Location, String>>(compareBy<Pair<Location, String>> { (_, steps) -> steps.length })
         .apply { add(Location(0, 0) to "") }
@@ -64,7 +38,7 @@ private fun longestPath(passcode: String): Int {
         val (location, steps) = queue.poll()
 
         if (location == exit) {
-            maxSteps = max(maxSteps, steps.length)
+            paths.add(steps)
         } else {
 
             val md5 = (passcode + steps).md5().take(4)
@@ -82,5 +56,6 @@ private fun longestPath(passcode: String): Int {
             }
         }
     }
-    return maxSteps
+
+    return paths
 }
