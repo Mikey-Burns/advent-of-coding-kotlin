@@ -23,72 +23,13 @@ private fun scramble(input: List<String>, start: String): String {
     for (instruction in input) {
         val split = instruction.split(" ")
         when {
-            instruction.startsWith("swap position") -> {
-                val firstIndex = split[2].toInt()
-                val secondIndex = split[5].toInt()
-                val first = scrambled[firstIndex]
-
-                scrambled[firstIndex] = scrambled[secondIndex]
-                scrambled[secondIndex] = first
-            }
-
-            instruction.startsWith("swap letter") -> {
-                val first = split[2].first()
-                val second = split[5].first()
-
-                scrambled.indices.forEach { index ->
-                    scrambled[index] = when (scrambled[index]) {
-                        first -> second
-                        second -> first
-                        else -> scrambled[index]
-                    }
-                }
-            }
-
-            instruction.startsWith("rotate left") -> {
-                val steps = split[2].toInt()
-                val toMove = scrambled.take(steps)
-                repeat(steps) {
-                    scrambled.removeFirst()
-                }
-                scrambled.addAll(toMove)
-            }
-
-            instruction.startsWith("rotate right") -> {
-                val steps = split[2].toInt()
-                val toMove = scrambled.takeLast(steps)
-                repeat(steps) {
-                    scrambled.removeLast()
-                }
-                scrambled.addAll(0, toMove)
-            }
-
-            instruction.startsWith("rotate based on") -> {
-                val letter = split[6].first()
-                val index = scrambled.indexOf(letter)
-                val rotations = (if (index >= 4) index + 2 else index + 1) % scrambled.size
-                val toMove = scrambled.takeLast(rotations)
-                repeat(rotations) {
-                    scrambled.removeLast()
-                }
-                scrambled.addAll(0, toMove)
-            }
-
-            instruction.startsWith("reverse") -> {
-                val first = split[2].toInt()
-                val second = split[4].toInt()
-                val sublist = scrambled.subList(first, second + 1).reversed()
-                sublist.forEachIndexed { offset, letter ->
-                    scrambled[first + offset] = letter
-                }
-            }
-
-            instruction.startsWith("move") -> {
-                val first = split[2].toInt()
-                val second = split[5].toInt()
-                val letter = scrambled.removeAt(first)
-                scrambled.add(second, letter)
-            }
+            instruction.startsWith("swap position") -> scrambled.swap(split[2].toInt(), split[5].toInt())
+            instruction.startsWith("swap letter") -> scrambled.swap(split[2][0], split[5][0])
+            instruction.startsWith("rotate left") -> scrambled.rotateLeft(split[2].toInt())
+            instruction.startsWith("rotate right") -> scrambled.rotateRight(split[2].toInt())
+            instruction.startsWith("rotate based on") -> scrambled.rotateRightAround(split[6][0])
+            instruction.startsWith("reverse") -> scrambled.reverse(split[2].toInt(), split[4].toInt())
+            instruction.startsWith("move") -> scrambled.move(split[2].toInt(), split[5].toInt())
         }
     }
     return scrambled.joinToString("")
@@ -96,84 +37,17 @@ private fun scramble(input: List<String>, start: String): String {
 
 private fun reverseScramble(input: List<String>, scrambled: String): String {
     val toUnscramble = scrambled.toMutableList()
-    val newToOld = mapOf(
-        1 to 0,
-        3 to 1,
-        5 to 2,
-        7 to 3,
-        10 % 8 to 4,
-        12 % 8 to 5,
-        14 % 8 to 6,
-        16 % 8 to 7,
-    )
 
     for (instruction in input.reversed()) {
         val split = instruction.split(" ")
         when {
-            instruction.startsWith("swap position") -> {
-                val firstIndex = split[2].toInt()
-                val secondIndex = split[5].toInt()
-                val first = toUnscramble[firstIndex]
-
-                toUnscramble[firstIndex] = toUnscramble[secondIndex]
-                toUnscramble[secondIndex] = first
-            }
-
-            instruction.startsWith("swap letter") -> {
-                val first = split[2].first()
-                val second = split[5].first()
-
-                toUnscramble.indices.forEach { index ->
-                    toUnscramble[index] = when (toUnscramble[index]) {
-                        first -> second
-                        second -> first
-                        else -> toUnscramble[index]
-                    }
-                }
-            }
-
-            instruction.startsWith("rotate left") -> {
-                val steps = split[2].toInt()
-                val toMove = toUnscramble.takeLast(steps)
-                repeat(steps) {
-                    toUnscramble.removeLast()
-                }
-                toUnscramble.addAll(0, toMove)
-            }
-
-            instruction.startsWith("rotate right") -> {
-                val steps = split[2].toInt()
-                val toMove = toUnscramble.take(steps)
-                repeat(steps) {
-                    toUnscramble.removeFirst()
-                }
-                toUnscramble.addAll(toMove)
-            }
-
-            instruction.startsWith("rotate based on") -> {
-                val letter = split[6].first()
-                val index = toUnscramble.indexOf(letter)
-                val originalIndex = newToOld.getValue(index)
-                while (toUnscramble[originalIndex] != letter) {
-                    toUnscramble.add(toUnscramble.removeFirst())
-                }
-            }
-
-            instruction.startsWith("reverse") -> {
-                val first = split[2].toInt()
-                val second = split[4].toInt()
-                val sublist = toUnscramble.subList(first, second + 1).reversed()
-                sublist.forEachIndexed { offset, letter ->
-                    toUnscramble[first + offset] = letter
-                }
-            }
-
-            instruction.startsWith("move") -> {
-                val first = split[5].toInt()
-                val second = split[2].toInt()
-                val letter = toUnscramble.removeAt(first)
-                toUnscramble.add(second, letter)
-            }
+            instruction.startsWith("swap position") -> toUnscramble.swap(split[2].toInt(), split[5].toInt())
+            instruction.startsWith("swap letter") -> toUnscramble.swap(split[2][0], split[5][0])
+            instruction.startsWith("rotate left") -> toUnscramble.rotateRight(split[2].toInt())
+            instruction.startsWith("rotate right") -> toUnscramble.rotateLeft(split[2].toInt())
+            instruction.startsWith("rotate based on") -> toUnscramble.rotateLeftAround(split[6][0])
+            instruction.startsWith("reverse") -> toUnscramble.reverse(split[2].toInt(), split[4].toInt())
+            instruction.startsWith("move") -> toUnscramble.move(split[2].toInt(), split[5].toInt())
         }
     }
     return toUnscramble.joinToString("")
@@ -190,4 +64,67 @@ private fun hacker(input: List<String>, scrambled: String): String {
             attemptedPasswords.add(password)
         }
     }
+}
+
+private fun MutableList<Char>.swap(first: Int, second: Int): MutableList<Char> = apply {
+    val letter = this[first]
+    this[first] = this[second]
+    this[second] = letter
+}
+
+private fun MutableList<Char>.swap(first: Char, second: Char): MutableList<Char> = apply {
+    val firstIndex = this.indexOf(first)
+    val secondIndex = this.indexOf(second)
+
+    this[firstIndex] = second
+    this[secondIndex] = first
+}
+
+private fun MutableList<Char>.rotateLeft(steps: Int): MutableList<Char> = apply {
+    repeat(steps) {
+        this.add(this.removeFirst())
+    }
+}
+
+private fun MutableList<Char>.rotateRight(steps: Int): MutableList<Char> = apply {
+    repeat(steps) {
+        this.addFirst(this.removeLast())
+    }
+}
+
+private fun MutableList<Char>.rotateRightAround(letter: Char): MutableList<Char> = apply {
+    val index = this.indexOf(letter)
+    val rotations = (if (index >= 4) index + 2 else index + 1) % size
+    rotateRight(rotations)
+}
+
+val newToOld = mapOf(
+    1 to 0,
+    3 to 1,
+    5 to 2,
+    7 to 3,
+    10 % 8 to 4,
+    12 % 8 to 5,
+    14 % 8 to 6,
+    16 % 8 to 7,
+)
+
+private fun MutableList<Char>.rotateLeftAround(letter: Char): MutableList<Char> = apply {
+    val index = indexOf(letter)
+    val originalIndex = newToOld.getValue(index)
+    while (this[originalIndex] != letter) {
+        this.add(this.removeFirst())
+    }
+}
+
+private fun MutableList<Char>.reverse(first: Int, second: Int): MutableList<Char> = apply {
+    subList(first, second + 1)
+        .reversed()
+        .forEachIndexed { offset, letter ->
+            this[first + offset] = letter
+        }
+}
+
+private fun MutableList<Char>.move(first: Int, second: Int): MutableList<Char> = apply {
+    add(second, removeAt(first))
 }
