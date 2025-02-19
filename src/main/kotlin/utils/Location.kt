@@ -57,7 +57,7 @@ object LocationAlgorithms {
         xRange: IntRange,
         yRange: IntRange,
         isValid: (Location) -> Boolean,
-        cost: (Location, Location) -> Int
+        cost: (Location, Location) -> Int = { _, _ -> 1 }
     ): Map<Location, Int> {
         val unvisited = buildSet {
             for (x in xRange) {
