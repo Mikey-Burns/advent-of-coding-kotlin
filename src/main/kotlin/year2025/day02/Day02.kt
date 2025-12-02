@@ -23,13 +23,25 @@ fun main() {
     measureTime { part2(input).println() }.println()
 }
 
+/**
+ * Parse the input into a list of LongRanges.
+ * Ranges are separated from each other by a comma.
+ * Each range is divided by a dash.
+ */
 private fun String.separateRanges(): List<LongRange> = this.split(",")
     .map { range ->
         val (start, end) = range.split("-").map { it.toLong() }
         start..end
     }
 
-private fun LongRange.invalidIds(findInvalidIds: (LongRange) -> List<Long>): List<Long> {
+/**
+ * Find the invalid IDs in a range.
+ * Takes the logic for processing a given range as a parameter.
+ *
+ * If the start and finish of a range have the same number of digits, apply the logic.
+ * If they are not the same, split the range into two ranges and recurse.
+ */
+private fun LongRange.invalidIds(findInvalidIds: (LongRange) -> Set<Long>): Set<Long> {
     val first = this.first.toString()
     val last = this.last.toString()
 
@@ -41,13 +53,12 @@ private fun LongRange.invalidIds(findInvalidIds: (LongRange) -> List<Long>): Lis
     }
 }
 
-private fun twoHalfInvalidCheck(range: LongRange): List<Long> {
+private fun twoHalfInvalidCheck(range: LongRange): Set<Long> {
     val first = range.first.toString()
     val last = range.last.toString()
 
-    return if (first.length == last.length && first.length.isOdd()) emptyList()
-    else (range.first..range.last)
-        .filter { it.isInvalidHalf() }
+    return if (first.length == last.length && first.length.isOdd()) emptySet()
+    else range.filter { it.isInvalidHalf() }.toSet()
 }
 
 private fun Long.isInvalidHalf(): Boolean {
@@ -56,7 +67,7 @@ private fun Long.isInvalidHalf(): Boolean {
     return asString.take(asString.length / 2) == asString.takeLast(asString.length / 2)
 }
 
-private fun allSizesInvalidCheck(range: LongRange): List<Long> {
+private fun allSizesInvalidCheck(range: LongRange): Set<Long> {
     val maxChunkSize = range.first.toString().length / 2
     return range.filter { id ->
         (1..maxChunkSize)
@@ -65,7 +76,6 @@ private fun allSizesInvalidCheck(range: LongRange): List<Long> {
             }
     }
         .toSet()
-        .toList()
 }
 
 private fun Int.isOdd(): Boolean = this % 2 != 0
