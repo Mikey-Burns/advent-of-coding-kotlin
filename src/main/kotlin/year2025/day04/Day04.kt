@@ -27,9 +27,9 @@ fun main() {
 private fun List<String>.toGrid(): List<List<Char>> = this.map(String::toList)
 
 private fun List<List<Char>>.accessibleRolls(): List<Point2D> =
-    this.indices.flatMap { column ->
-        this[column].indices
-            .map { row -> Point2D(row, column) }
+    this.indices.flatMap { y ->
+        this[y].indices
+            .map { x -> Point2D(x, y) }
             .filter { point -> this[point] == '@' }
             .filter { point ->
                 point.allNeighbors()
@@ -39,9 +39,9 @@ private fun List<List<Char>>.accessibleRolls(): List<Point2D> =
     }
 
 private fun List<List<Char>>.cleanupMaxPaper(): List<Point2D> =
-    this.indices.flatMap { column ->
-        this[column].indices
-            .map { row -> Point2D(row, column) }
+    this.indices.flatMap { y ->
+        this[y].indices
+            .map { x -> Point2D(x, y) }
             .filter { point -> this[point] == '@' }
     }
         .let { paper -> cleanupMaxPaper(this.first().indices, this.indices, paper) }
