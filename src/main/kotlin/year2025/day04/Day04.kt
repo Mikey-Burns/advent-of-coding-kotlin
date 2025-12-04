@@ -9,9 +9,9 @@ import utils.readInput
 import kotlin.time.measureTime
 
 fun main() {
-    fun part1(input: List<String>): Int = input.accessibleRolls().size
+    fun part1(input: List<String>): Int = input.toGrid().accessibleRolls().size
 
-    fun part2(input: List<String>): Int = input.cleanupMaxPaper().size
+    fun part2(input: List<String>): Int = input.toGrid().cleanupMaxPaper().size
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day04_test", "2025")
@@ -24,24 +24,39 @@ fun main() {
     measureTime { part2(input).println() }.println()
 }
 
-private fun List<String>.accessibleRolls(cleanedPaper: List<Point2D> = emptyList()): List<Point2D> {
-    val grid = this.map<String, List<Char>>(String::toList)
-    return grid.indices.flatMap { column ->
-        grid[column].indices
+private fun List<String>.toGrid(): List<List<Char>> = this.map(String::toList)
+
+private fun List<List<Char>>.accessibleRolls(): List<Point2D> =
+    this.indices.flatMap { column ->
+        this[column].indices
             .map { row -> Point2D(row, column) }
-            .filter { point -> point !in cleanedPaper }
-            .filter { point -> grid[point] == '@' }
+            .filter { point -> this[point] == '@' }
             .filter { point ->
                 point.allNeighbors()
-                    .filter { grid.isInBounds(it) }
-                    .filter { it !in cleanedPaper }
-                    .count { grid[it] == '@' } < 4
+                    .filter { this.isInBounds(it) }
+                    .count { this[it] == '@' } < 4
             }
     }
-}
 
-private fun List<String>.cleanupMaxPaper(cleaned: List<Point2D> = emptyList()): List<Point2D> {
-    val newCleaned = this.accessibleRolls(cleaned)
-    if (newCleaned.isEmpty()) return cleaned
-    return cleanupMaxPaper(newCleaned + cleaned)
+private fun List<List<Char>>.cleanupMaxPaper(): List<Point2D> =
+    this.indices.flatMap { column ->
+        this[column].indices
+            .map { row -> Point2D(row, column) }
+            .filter { point -> this[point] == '@' }
+    }
+        .let { paper -> cleanupMaxPaper(this.first().indices, this.indices, paper) }
+
+
+private fun cleanupMaxPaper(
+    xRange: IntRange,
+    yRange: IntRange,
+    paper: List<Point2D>,
+    accessible: List<Point2D> = emptyList()
+): List<Point2D> = paper.filter { point ->
+    point.allNeighbors()
+        .count { it in paper } < 4
 }
+    .let { filtered ->
+        if (filtered.isEmpty()) accessible
+        else cleanupMaxPaper(xRange, yRange, paper - filtered.toSet(), accessible + filtered)
+    }
