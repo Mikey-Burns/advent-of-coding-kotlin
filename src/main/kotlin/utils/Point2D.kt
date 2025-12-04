@@ -7,6 +7,10 @@ data class Point2D(val x: Int, val y: Int) {
     fun west(): Point2D = copy(x = x - 1)
     fun north(): Point2D = copy(y = y - 1)
     fun south(): Point2D = copy(y = y + 1)
+    fun northEast(): Point2D = north().east()
+    fun southEast(): Point2D = south().east()
+    fun southWest(): Point2D = south().west()
+    fun northWest(): Point2D = north().west()
 
     fun step(direction: Compass): Point2D = when (direction) {
         Compass.NORTH -> north()
@@ -17,6 +21,9 @@ data class Point2D(val x: Int, val y: Int) {
 }
 
 fun Point2D.orthogonalNeighbors(): List<Point2D> = listOf(east(), west(), north(), south())
+fun Point2D.allNeighbors(): List<Point2D> =
+    orthogonalNeighbors() + northEast() + southEast() + southWest() + northWest()
+
 operator fun Point2D.plus(other: Point2D): Point2D = Point2D(x + other.x, y + other.y)
 enum class Compass {
     NORTH, EAST, SOUTH, WEST
