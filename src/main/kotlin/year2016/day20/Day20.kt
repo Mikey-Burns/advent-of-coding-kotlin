@@ -2,7 +2,7 @@ package year2016.day20
 
 import utils.println
 import utils.readInput
-import kotlin.math.max
+import utils.reduceLongRange
 import kotlin.time.measureTime
 
 private const val MAX_IP = 4294967295L
@@ -33,17 +33,7 @@ private fun lowestAllowed(blockedRanges: List<LongRange>): Long {
 }
 
 private fun numberAllowed(blockedRanges: List<LongRange>): Long {
-    val combinedRanges = blockedRanges.fold(emptyList<LongRange>()) { allRanges, range ->
-        val previousRange = allRanges.lastOrNull()
-        if (previousRange == null || range.first > previousRange.last + 1) {
-            allRanges.toMutableList().apply { add(range) }
-        } else {
-            allRanges.dropLast(1).toMutableList()
-                .apply {
-                    add(previousRange.first..max(previousRange.last, range.last))
-                }
-        }
-    }
+    val combinedRanges = blockedRanges.reduceLongRange()
     val blockedIps = combinedRanges.sumOf { it.last - it.first + 1 }
 
 

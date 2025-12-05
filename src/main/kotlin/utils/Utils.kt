@@ -58,7 +58,20 @@ fun <T> Collection<T>.uniquePairs(): List<Pair<T, T>> = this.flatMapIndexed { in
         .map { second -> first to second }
 }
 
-fun List<IntRange>.reduce(): List<IntRange> = this.sortedBy { it.first }
+fun List<IntRange>.reduceIntRange(): List<IntRange> = this.sortedBy { it.first }
+    .let { sorted ->
+        if (size == 1) return this
+        sorted.drop(1).fold(mutableListOf(sorted.first())) { reduced, range ->
+            val lastRange = reduced.last()
+            if (range.first <= lastRange.last + 1)
+                reduced[reduced.lastIndex] = (lastRange.first..maxOf(lastRange.last, range.last))
+            else
+                reduced.add(range)
+            reduced
+        }
+    }
+
+fun List<LongRange>.reduceLongRange(): List<LongRange> = this.sortedBy { it.first }
     .let { sorted ->
         if (size == 1) return this
         sorted.drop(1).fold(mutableListOf(sorted.first())) { reduced, range ->

@@ -1,10 +1,10 @@
 package year2022.day15
 
-import utils.println
-import utils.readInput
-import utils.reduce
 import utils.Point2D
 import utils.manhattanDistance
+import utils.println
+import utils.readInput
+import utils.reduceIntRange
 import kotlin.math.abs
 import kotlin.time.measureTime
 
@@ -73,7 +73,7 @@ private fun Map<Point2D, Point2D>.findBeacon(maxRow: Int): Point2D {
         .associateWith { row ->
             listOfMaps.filter { it.containsKey(row) }
                 .mapNotNull { it[row] }
-                .reduce()
+                .reduceIntRange()
         }
         .maxBy { (_, excludedValues) -> excludedValues.size }
     val x = exclusions.first().last + 1

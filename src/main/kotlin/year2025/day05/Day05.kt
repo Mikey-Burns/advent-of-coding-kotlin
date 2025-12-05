@@ -2,7 +2,7 @@ package year2025.day05
 
 import utils.println
 import utils.readInput
-import kotlin.math.max
+import utils.reduceLongRange
 import kotlin.time.measureTime
 
 fun main() {
@@ -27,18 +27,7 @@ private data class FoodDatabase(val freshRanges: List<LongRange>, val ingredient
         ingredients.count { ingredient -> freshRanges.any { range -> ingredient in range } }
 
     fun possibleFreshIngredients(): Long {
-        val sorted = freshRanges.sortedBy { it.first }
-        val combinedRanges = sorted.fold(emptyList<LongRange>()) { allRanges, range ->
-            val previousRange = allRanges.lastOrNull()
-            if (previousRange == null || range.first > previousRange.last + 1) {
-                allRanges.toMutableList().apply { add(range) }
-            } else {
-                allRanges.dropLast(1).toMutableList()
-                    .apply {
-                        add(previousRange.first..max(previousRange.last, range.last))
-                    }
-            }
-        }
+        val combinedRanges = freshRanges.reduceLongRange()
 
         var longCount = combinedRanges.size.toLong()
         combinedRanges.forEach { longCount += it.last - it.first }
