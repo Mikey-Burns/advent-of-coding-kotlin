@@ -29,6 +29,7 @@ private data class FoodDatabase(val freshRanges: List<LongRange>, val ingredient
     fun possibleFreshIngredients(): Long {
         val combinedRanges = freshRanges.reduceLongRange()
 
+        // This really should use it.last - it.first + 1, but instead we move the +1 into the initial longCount
         var longCount = combinedRanges.size.toLong()
         combinedRanges.forEach { longCount += it.last - it.first }
         return longCount
