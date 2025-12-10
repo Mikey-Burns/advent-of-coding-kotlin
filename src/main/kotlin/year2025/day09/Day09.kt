@@ -45,6 +45,47 @@ private fun Tile.area(other: Tile): Long = abs((first - other.first + 1) * (seco
 
 private data class TileGrid(val redTiles: List<Tile>) {
 
+    fun myMaxSize(): Long {
+        val edges = buildSet {
+            (redTiles + redTiles.first()).zipWithNext().forEach { (start, dest) ->
+                if (start.first == dest.first) {
+                    (min(start.second, dest.second)..max(start.second, dest.second))
+                        .forEach { y ->
+                            add(start.first to y)
+                        }
+                } else {
+                    (min(start.first, dest.first)..max(start.first, dest.first))
+                        .forEach { x ->
+                            add(x to start.second)
+                        }
+                }
+            }
+        }
+
+        fun Tile.innerRectangle(other: Tile): Set<Tile> = buildSet {
+            val minX = min(first, other.first) + 1
+            val maxX = max(first, other.first) - 1
+            val minY = min(second, other.second) + 1
+            val maxY = max(second, other.second) - 1
+
+            (minX..maxX).forEach { x ->
+                add(x to minY)
+                add(x to maxY)
+            }
+            (minY..maxY).forEach { y ->
+                add(minX to y)
+                add(maxX to y)
+            }
+        }
+
+        return redTiles.areas()
+            .sortedByDescending { it.third }
+            .first { (start, dest, area) ->
+                start.innerRectangle(dest).none { innerEdge -> innerEdge in edges}
+            }
+            .third
+    }
+
     fun maximumSquareSize(): Long {
 
         val edges =
