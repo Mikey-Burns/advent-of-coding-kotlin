@@ -83,3 +83,5 @@ fun List<LongRange>.reduceLongRange(): List<LongRange> = this.sortedBy { it.firs
             reduced
         }
     }
+
+fun LongRange.size() = last - first + 1

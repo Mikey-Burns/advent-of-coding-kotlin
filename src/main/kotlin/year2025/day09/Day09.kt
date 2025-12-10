@@ -2,13 +2,16 @@ package year2025.day09
 
 import utils.println
 import utils.readInput
+import utils.size
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.time.measureTime
 
 fun main() {
-    fun part1(input: List<String>): Long = input.redTiles().areas().max()
+    fun part1(input: List<String>): Long = input.redTiles().areas().maxOf { it.third }
 
-    fun part2(input: List<String>): Long = 0L
+    fun part2(input: List<String>): Long = TileGrid(input.redTiles()).maximumSquareSize()
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day09_test", "2025")
@@ -21,13 +24,64 @@ fun main() {
     measureTime { part2(input).println() }.println()
 }
 
-private fun List<String>.redTiles(): List<Pair<Long, Long>> = map {
+private fun List<String>.redTiles(): List<Tile> = map {
     val (x, y) = it.split(",")
     x.toLong() to y.toLong()
 }
 
-private fun List<Pair<Long, Long>>.areas(): List<Long> = flatMapIndexed { index, pair ->
-    this.drop(index + 1).map { other -> pair.area(other) }
+private fun List<Tile>.areas(): List<Triple<Tile, Tile, Long>> = flatMapIndexed { index, pair ->
+    this.drop(index + 1).map { other -> Triple(pair, other, pair.area(other)) }
 }
 
-private fun Pair<Long, Long>.area(other: Pair<Long, Long>): Long = abs((first - other.first + 1) * (second - other.second + 1))
+private fun List<Tile>.rectangles(): List<Rectangle> = flatMapIndexed { index, pair ->
+    this.drop(index + 1).map { other ->
+        val xRange = (min(pair.first, other.first)..max(pair.first, other.first))
+        val yRange = (min(pair.second, other.second)..max(pair.second, other.second))
+        Rectangle(xRange, yRange)
+    }
+}
+
+private fun Tile.area(other: Tile): Long = abs((first - other.first + 1) * (second - other.second + 1))
+
+private data class TileGrid(val redTiles: List<Tile>) {
+
+    fun maximumSquareSize(): Long {
+
+        val edges =
+            (redTiles + redTiles.first()).zipWithNext().map { (start, dest) ->
+                val xRange = (min(start.first, dest.first)..max(start.first, dest.first))
+                val yRange = (min(start.second, dest.second)..max(start.second, dest.second))
+
+                Rectangle(xRange, yRange)
+            }
+
+        val rectangles = (redTiles + redTiles.first()).rectangles()
+            .sortedByDescending { it.area }
+
+        val bigRectangle = rectangles
+            .first {
+                val innerRectangle = it.copy(
+                    xRange = (it.xRange.first + 1)..<it.xRange.last,
+                    yRange = (it.yRange.first + 1)..<it.yRange.last
+                )
+
+                edges.none { edge -> edge.overlaps(innerRectangle) }
+            }
+        return bigRectangle.area
+    }
+}
+
+
+typealias Tile = Pair<Long, Long>
+
+private data class Rectangle(val xRange: LongRange, val yRange: LongRange) {
+
+    val area = xRange.size() * yRange.size()
+
+    fun overlaps(other: Rectangle): Boolean {
+        val xOverlaps = max(xRange.first, other.xRange.first) <= min(xRange.last, other.xRange.last)
+        val yOverlaps = max(yRange.first, other.yRange.first) <= min(yRange.last, other.yRange.last)
+
+        return xOverlaps && yOverlaps
+    }
+}
