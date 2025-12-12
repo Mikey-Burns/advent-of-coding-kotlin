@@ -2,13 +2,16 @@ package year2025.day10
 
 import utils.println
 import utils.readInput
+import kotlin.math.pow
 import kotlin.time.measureTime
 
 fun main() {
     fun part1(input: List<String>): Int = input.map { Machine(it) }
-        .sumOf { it.minimumButtonPresses() }
+        .sumOf { it.minimumPresses(it.indicatorLights) }
 
-    fun part2(input: List<String>): Long = 0L
+    fun part2(input: List<String>): Long = input.map { Machine(it) }
+        .map { it.combinations() }
+        .let { 0L }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day10_test", "2025")
@@ -27,37 +30,36 @@ private data class Machine(
     val joltages: List<Int>
 ) {
 
-    fun minimumButtonPresses(): Int {
-        return (1..buttons.size).first { numberOfButtons ->
-            findAllCombinations(numberOfButtons)
-                .any {
-                    buttonsMatch(it)
-                }
-        }
-    }
-
-    private fun findAllCombinations(numberOfButtons: Int): Set<Set<Button>> {
-        fun findCombinations(selected: Set<Button>, remaining: Set<Button>, desiredSize: Int): Set<Set<Button>> {
-            return if (selected.size == desiredSize) setOf(selected)
-            else {
-                remaining.flatMap { button ->
-                    findCombinations(selected + button, remaining - button, desiredSize)
-                }
-                    .toSet()
+    /**
+     * Calculate all combinations of button presses where each button is pressed up to one time.
+     * Use a binary representation of each button being unpressed or pressed,
+     * then calculate how much each counter should be increased based on those button presses.
+     */
+    fun combinations(): Map<List<Int>, Int> {
+        val counts = List(joltages.size) { 0 }
+        val costs = mutableMapOf<List<Int>, Int>()
+        (1..<(2.0.pow(buttons.size).toInt()))
+            .map { counter -> counter.toString(2).padStart(buttons.size, '0') }
+            .map { binary ->
+                binary.toList()
+                    .mapIndexedNotNull { index, ch -> if (ch == '1') buttons[index] else null }
             }
-        }
+            .forEach { buttonList ->
+                val myCounts = counts.toMutableList()
+                buttonList.forEach { button -> button.lights.forEach { light -> myCounts[light]++ } }
+                costs.putIfAbsent(myCounts.toList(), buttonList.size)
+            }
 
-        return findCombinations(emptySet(), buttons.toSet(), numberOfButtons)
+        return costs
     }
 
-    private fun buttonsMatch(buttonsToPress: Set<Button>): Boolean {
-        val indexPresses = buttonsToPress.flatMap { button -> button.lights }
-            .groupBy { it }
-        return indicatorLights.withIndex().all { (index, light) ->
-            val presses = indexPresses[index]?.size ?: 0
-            val isOn = presses % 2 == 1
-            light == isOn
-        }
+    /**
+     * Find the minimum presses to match the boolean flags
+     */
+    fun minimumPresses(onOff: List<Boolean> = indicatorLights): Int {
+        return combinations()
+            .filter { (buttonCounts, cost) -> buttonCounts.map { it % 2 == 1 } == onOff }
+            .minOf { (buttonCounts, cost) -> cost }
     }
 }
 
