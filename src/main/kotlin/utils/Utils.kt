@@ -3,6 +3,8 @@ package utils
 import java.security.MessageDigest
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Reads lines from the given input txt file.
@@ -83,5 +85,12 @@ fun List<LongRange>.reduceLongRange(): List<LongRange> = this.sortedBy { it.firs
             reduced
         }
     }
+
+/**
+ * Two ranges overlap if the maximum of the two starting points
+ * is below the minimum of either end point.
+ */
+fun LongRange.overlaps(other: LongRange): Boolean =
+    max(first, other.first) <= min(last, other.last)
 
 fun LongRange.size() = last - first + 1
